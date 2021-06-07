@@ -33,10 +33,79 @@ def get_font_markup(fontdesc, text):
     return f'<span font_desc="{fontdesc}">{text}</span>'
 
 
+class Selector:
+    """ Selector base class """
+
+    def __init__(self):
+        # Setup the listbox
+        self.listbox = Gtk.ListBox()
+        self.listbox.set_selection_mode(Gtk.SelectionMode.SINGLE)
+        self.listbox.connect('row-selected', self.on_row_changes)
+        self._rows = {}
+        self.ndx = 0
+        self.callback = None
+
+    def add_row(self, name, markup):
+        """ Overload this in a subclass"""
+        raise NotImplemented
+
+    def on_row_changes(self, widget, row):
+        ndx = row.get_index()
+        if self.callback:
+            self.callback(self._rows[ndx])
+        else:
+            print(f'Row Selected : {self._rows[ndx]}')
+
+    def connect(self, callback):
+        self.callback = callback
+
+    @property
+    def widget(self):
+        """Return the root widget for this class"""
+        return self.listbox
+
+
+class TextSelector(Selector):
+    """ Vertical Selector Widget that contains a number of strings where one can be selected """
+
+    def add_row(self, name, markup):
+        """ Add a named row to the selector with at given icon name"""
+        # get the image
+        label = Gtk.Label()
+        label.set_markup(markup)
+        # set the widget size request to 32x32 px, so we get some margins
+        #label.set_size_request(100, 24)
+        label.set_single_line_mode(True)
+        label.set_halign(Gtk.Align.START)
+        label.set_hexpand(True)
+        label.set_xalign(0)
+        label.set_margin_start(5)
+        label.set_margin_end(10)
+        row = self.listbox.append(label)
+        # store the index names, so we can find it on selection
+        self._rows[self.ndx] = name
+        self.ndx += 1
+
+
+class IconSelector(Selector):
+    """ Vertical Selector Widget that contains a number of icons where one can be selected """
+
+    def add_row(self, name, icon_name):
+        """ Add a named row to the selector with at given icon name"""
+        # get the image
+        pix = Gtk.Image.new_from_icon_name(icon_name)
+        # set the widget size request to 32x32 px, so we get some margins
+        pix.set_size_request(32, 32)
+        row = self.listbox.append(pix)
+        # store the index names, so we can find it on selection
+        self._rows[self.ndx] = name
+        self.ndx += 1
+
+
 class SearchBar:
     """ Wrapper for Gtk.Searchbar Gtk.SearchEntry"""
 
-    def __init__(self, win = None):
+    def __init__(self, win=None):
         self.searchbar = Gtk.SearchBar()
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         box.set_spacing(10)

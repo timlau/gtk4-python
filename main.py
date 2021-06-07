@@ -21,7 +21,7 @@ Sample Python Gtk4 Application
 import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk
-from widgets import Window, Stack, MenuButton, get_font_markup, SearchBar
+from widgets import Window, Stack, MenuButton, get_font_markup, SearchBar, IconSelector, TextSelector
 
 # Gtk.Builder xml for the application menu
 APP_MENU = """
@@ -30,11 +30,11 @@ APP_MENU = """
 <menu id='app-menu'>
   <section>
     <item>
-      <attribute name='label' translatable='yes'>_New Window</attribute>
+      <attribute name='label' translatable='yes'>_New Stuff</attribute>
       <attribute name='action'>win.new</attribute>
     </item>
     <item>
-      <attribute name='label' translatable='yes'>_About Sunny</attribute>
+      <attribute name='label' translatable='yes'>_About</attribute>
       <attribute name='action'>win.about</attribute>
     </item>
     <item>
@@ -72,15 +72,14 @@ class MyWindow(Window):
         self.search = SearchBar(self.window)
         content.append(self.search.widget)
         # search bar is active by default
-        self.search.set_search_mode(True)
         self.search.connect(self.on_search)
 
         # Stack
         self.stack = Stack()
         # Stack Page 1
-        self.page1 = self.add_page('page1', 'Page 1')
+        self.page1 = self.add_page_selector_icon('page1', 'Page 1')
         # Stack Page 2
-        self.page2 = self.add_page('page2', 'Page 2')
+        self.page2 = self.add_page_selector_text('page2', 'Page 2')
         # add stack switcher to center of titlebar
         self.headerbar.set_title_widget(self.stack.switcher)
         # Add stack to window
@@ -88,10 +87,18 @@ class MyWindow(Window):
         # Add main content box to windows
         self.window.set_child(content)
 
-    def add_page(self, name, title):
+    def add_page_selector_icon(self, name, title):
         """ Add a simple page with a centered Label to the stack"""
         # Content box for the page
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        # Add info selector
+        selector = IconSelector()
+        selector.add_row("row1", "dialog-information-symbolic")
+        selector.add_row("row2", "software-update-available-symbolic")
+        selector.add_row("row3", "drive-multidisk-symbolic")
+        selector.add_row("row4", "insert-object-symbolic")
+        selector.connect(self.on_select_page1)
+        box.append(selector.widget)
         # Add a label with custom font in the center
         label = Gtk.Label()
         markup = get_font_markup('Noto Sans Regular 32', f'This is {title}')
@@ -100,6 +107,31 @@ class MyWindow(Window):
         label.set_hexpand(True)
         label.set_vexpand(True)
         box.append(label)
+        self.page1_label = label
+        # Add the content box as a new page in the stack
+        return self.stack.add_page(name, title, box)
+
+    def add_page_selector_text(self, name, title):
+        """ Add a simple page with a centered Label to the stack"""
+        # Content box for the page
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        # Add info selector
+        selector = TextSelector()
+        selector.add_row("Orange", "Orange")
+        selector.add_row("Apple", "Apple")
+        selector.add_row("Water Melon", "Water Melon")
+        selector.add_row("Lollypop", "Lollypop")
+        selector.connect(self.on_select_page2)
+        box.append(selector.widget)
+        # Add a label with custom font in the center
+        label = Gtk.Label()
+        markup = get_font_markup('Noto Sans Regular 32', f'This is {title}')
+        label.set_markup(markup)
+        # fill the whole page, will make the Label centered.
+        label.set_hexpand(True)
+        label.set_vexpand(True)
+        box.append(label)
+        self.page2_label = label
         # Add the content box as a new page in the stack
         return self.stack.add_page(name, title, box)
 
@@ -112,6 +144,16 @@ class MyWindow(Window):
 
     def on_search(self, widget):
         print(f'Searching for : {widget.get_text()}')
+
+    def on_select_page1(self, name):
+        print(f'on_select_page1 : {name}')
+        markup = get_font_markup('Noto Sans Regular 32', f'{name} is selected')
+        self.page1_label.set_markup(markup)
+
+    def on_select_page2(self, name):
+        print(f'on_select_page2 : {name}')
+        markup = get_font_markup('Noto Sans Regular 32', f'{name} is selected')
+        self.page2_label.set_markup(markup)
 
 
 def on_activate(app):
