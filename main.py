@@ -21,7 +21,7 @@ Sample Python Gtk4 Application
 import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk
-from widgets import Window, Stack, MenuButton, get_font_markup
+from widgets import Window, Stack, MenuButton, get_font_markup, SearchBar
 
 # Gtk.Builder xml for the application menu
 APP_MENU = """
@@ -57,6 +57,7 @@ class MyWindow(Window):
         self.add_action('new', self.menu_handler)
         self.add_action('about', self.menu_handler)
         self.add_action('quit', self.menu_handler)
+
         # make a new title label and add it to the left.
         # So we kan place the stack switcher in the middle
         label = Gtk.Label()
@@ -65,6 +66,15 @@ class MyWindow(Window):
         label.set_halign(Gtk.Align.END)
         label.set_width_chars(len(title)+2)
         self.headerbar.pack_start(label)
+        # Main content box
+        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        # Search Bar
+        self.search = SearchBar(self.window)
+        content.append(self.search.widget)
+        # search bar is active by default
+        self.search.set_search_mode(True)
+        self.search.connect(self.on_search)
+
         # Stack
         self.stack = Stack()
         # Stack Page 1
@@ -74,7 +84,9 @@ class MyWindow(Window):
         # add stack switcher to center of titlebar
         self.headerbar.set_title_widget(self.stack.switcher)
         # Add stack to window
-        self.window.set_child(self.stack.widget)
+        content.append(self.stack.widget)
+        # Add main content box to windows
+        self.window.set_child(content)
 
     def add_page(self, name, title):
         """ Add a simple page with a centered Label to the stack"""
@@ -97,6 +109,9 @@ class MyWindow(Window):
         print(f'active : {name}')
         if name == 'quit':
             self.window.close()
+
+    def on_search(self, widget):
+        print(f'Searching for : {widget.get_text()}')
 
 
 def on_activate(app):

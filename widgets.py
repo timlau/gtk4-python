@@ -33,6 +33,47 @@ def get_font_markup(fontdesc, text):
     return f'<span font_desc="{fontdesc}">{text}</span>'
 
 
+class SearchBar:
+    """ Wrapper for Gtk.Searchbar Gtk.SearchEntry"""
+
+    def __init__(self, win = None):
+        self.searchbar = Gtk.SearchBar()
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        box.set_spacing(10)
+        # Add SearchEntry
+        self.entry = Gtk.SearchEntry()
+        self.entry.set_hexpand(True)
+        box.append(self.entry)
+        # Add Search Options button (Menu content need to be added)
+        btn = Gtk.MenuButton()
+        btn.set_icon_name('preferences-other-symbolic')
+        self.search_options = btn
+        box.append(btn)
+        self.searchbar.set_child(box)
+        # connect search entry to seach bar
+        self.searchbar.connect_entry(self.entry)
+        if win:
+            # set key capture from main window, it will show searchbar, when you start typing
+            self.searchbar.set_key_capture_widget(win)
+        # show close button in search bar
+        self.searchbar.set_show_close_button(True)
+        # Set search mode to off by default
+        self.searchbar.set_search_mode(False)
+
+    @property
+    def widget(self):
+        """Return the root widget for this class"""
+        return self.searchbar
+
+    def connect(self, callback):
+        """ Connect the search entry activate to an callback handler"""
+        self.entry.connect('activate', callback)
+
+    def set_search_mode(self, mode):
+        """ Set the search mode (search bar is shown and active """
+        self.searchbar.set_search_mode(mode)
+
+
 class MenuButton:
     """
     Wrapper class for at Gtk.Menubutton with a menu defined
