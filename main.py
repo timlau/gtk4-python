@@ -23,7 +23,7 @@ gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk
 from widgets import Window, Stack, MenuButton, get_font_markup
 
-
+# Gtk.Builder xml for the application menu
 APP_MENU = """
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
@@ -47,40 +47,52 @@ APP_MENU = """
 """
 
 
-
 class MyWindow(Window):
 
     def __init__(self, app, title, width, height):
         Window.__init__(self, app, title, height, width)
-        # Add Menu Button
+        # Add Menu Button to the titlebar (Right Side)
         menu = MenuButton(APP_MENU, 'app-menu')
         self.headerbar.pack_end(menu.widget)
         self.add_action('new', self.menu_handler)
         self.add_action('about', self.menu_handler)
         self.add_action('quit', self.menu_handler)
-        # Add Stack
+        # make a new title label and add it to the left.
+        # So we kan place the stack switcher in the middle
+        label = Gtk.Label()
+        label.set_text(title)
+        # add 2 chars indent on the label for better looks
+        label.set_halign(Gtk.Align.END)
+        label.set_width_chars(len(title)+2)
+        self.headerbar.pack_start(label)
+        # Stack
         self.stack = Stack()
         # Stack Page 1
         self.page1 = self.add_page('page1', 'Page 1')
         # Stack Page 2
         self.page2 = self.add_page('page2', 'Page 2')
-        # add Switcher to center of titlebar
+        # add stack switcher to center of titlebar
         self.headerbar.set_title_widget(self.stack.switcher)
         # Add stack to window
         self.window.set_child(self.stack.widget)
 
     def add_page(self, name, title):
+        """ Add a simple page with a centered Label to the stack"""
+        # Content box for the page
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        # Add a label with custom font in the center
         label = Gtk.Label()
         markup = get_font_markup('Noto Sans Regular 32', f'This is {title}')
         label.set_markup(markup)
-        # fill the whole page
+        # fill the whole page, will make the Label centered.
         label.set_hexpand(True)
         label.set_vexpand(True)
         box.append(label)
+        # Add the content box as a new page in the stack
         return self.stack.add_page(name, title, box)
 
     def menu_handler(self, action, state):
+        """ Callback for  menu actions"""
         name = action.get_name()
         print(f'active : {name}')
         if name == 'quit':
@@ -88,10 +100,18 @@ class MyWindow(Window):
 
 
 def on_activate(app):
-    mywin = MyWindow(app, "My Application", 800, 800)
-    Gtk.Widget.show(mywin.window)
+    """
+    Gtk.Application activate callback, called when application is run
+    We use this to create the application window and show it
+    """
+    # Create the application windows
+    win = MyWindow(app, "My Gtk4 Application", 800, 800)
+    # Show the window (widget)
+    Gtk.Widget.show(win.widget)
 
 
-app = Gtk.Application(application_id='dk.rasmil.Example')
-app.connect('activate', on_activate)
-app.run(None)
+if __name__ == '__main__':
+    # Create the main Gtk Application an connect the activate callback and run the application
+    app = Gtk.Application(application_id='dk.rasmil.Example')
+    app.connect('activate', on_activate)
+    app.run(None)
