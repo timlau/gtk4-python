@@ -1,0 +1,87 @@
+/* Style for Gtk.Frame */
+frame {
+    border: 3px solid #0000ff;
+    border-radius: 20px;
+    color: #ff0000;
+    background-color: #606060;
+
+}
+
+/* Style for Gtk.Box */
+box {
+    border: 2px solid #ffffff;
+    border-radius: 10px;
+    background-color: #000000;
+    padding: 0px;
+    margin: 10px;
+    color: #ffffff;
+    opacity: 0.8;
+}
+
+box > revealer {
+    border-width: 0px;
+}
+
+revealer > box {
+    border: 2px solid rgba(0, 255, 255, 0.3);
+    border-radius: 5px;
+    background-color: #202020;
+}
+
+/* Style for Gtk.label in Gtk.Box */
+box > label {
+    color: #00ff00;
+    margin: 5px;
+}
+
+scale {
+    /* top | right | bottom | left */
+    margin: 15px;
+}
+
+
+progressbar {
+    /* top | right | bottom | left */
+    margin: 20px;
+}
+
+/* Prograss background bar */
+progressbar > trough {
+    min-height: 8px;
+    background-color: #007070;
+}
+
+/* Prograss */
+progressbar > trough > progress {
+    min-height: 10px;
+    background-color: #00ffff;
+}
+
+/* Style for Gtk.Paned Separator */
+paned > separator {
+  background-image: linear-gradient(to bottom, #00ffff, #00ffff);
+  background-size: 2px 2px;
+}
+
+/* Style for Gtk.Separator */
+
+box > separator {
+  background-color: rgba(0, 255, 255, 0.3);
+  min-width: 2px;
+  min-height: 2px;
+  margin: 5px;
+}
+
+textview.view {
+    margin: 10px;
+    padding: 10px;
+    border: 2px solid rgba(0, 255, 255, 0.3);
+}
+
+grid {
+    margin: 10px;
+}
+
+grid > label {
+    font-size: 12pt;
+}

@@ -22,11 +22,10 @@ It takes some of the hassle away from building Gtk4 application in Python
 So you can create an cool application, without all the boilerplate code
 
 """
-
-
+import os.path
 import gi
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gtk, Gio
+from gi.repository import Gtk, Gio, GLib
 
 
 def get_font_markup(fontdesc, text):
@@ -183,7 +182,7 @@ class Stack:
 class Window:
     """ Wrapper for Gtk.ApplicationWindow with a headerbar"""
 
-    def __init__(self, app, title, width, height):
+    def __init__(self, app, title, width, height, css=None):
         self.app = app
         self.window = Gtk.ApplicationWindow(application=app)
         self.window.set_default_size(width, height)
@@ -192,6 +191,33 @@ class Window:
         label = Gtk.Label()
         label.set_text(title)
         self.headerbar.set_title_widget(label)
+        # load CSS with custom styling
+        self.css_provider = self.load_css(css)
+
+    def load_css(self, css_fn):
+        """create a provider for custom styling"""
+        css_provider = None
+        if css_fn and os.path.exists(css_fn):
+            css_provider = Gtk.CssProvider()
+            try:
+                css_provider.load_from_path(css_fn)
+            except GLib.Error as e:
+                print(f"Error loading CSS : {e} ")
+                return None
+            print(f'loading custom styling : {css_fn}')
+        return  css_provider
+
+    def _add_widget_styling(self, widget):
+        if self.css_provider:
+            context = widget.get_style_context()
+            context.add_provider(self.css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER)
+
+    def add_custom_styling(self, widget):
+        self._add_widget_styling(widget)
+        # iterate children recursive
+        for child in widget:
+            self.add_custom_styling(child)
+
 
     @property
     def widget(self):
