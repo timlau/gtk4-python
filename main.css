@@ -18,6 +18,10 @@ box {
     opacity: 0.8;
 }
 
+box > button {
+    all: unset;
+}
+
 box > revealer {
     border-width: 0px;
 }
@@ -26,6 +30,7 @@ revealer > box {
     border: 2px solid rgba(0, 255, 255, 0.3);
     border-radius: 5px;
     background-color: #202020;
+
 }
 
 /* Style for Gtk.label in Gtk.Box */
