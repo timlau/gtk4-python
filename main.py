@@ -25,8 +25,8 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version('Polkit', '1.0')
 
-from gi.repository import Gtk, Polkit, GObject, Gio
-from widgets import Window, Stack, MenuButton, get_font_markup, SearchBar, IconSelector, TextSelector
+from gi.repository import Gtk, Polkit, GObject
+from widgets import Window, Stack, MenuButton, get_font_markup, SearchBar, IconSelector, TextSelector, ListView
 
 
 # Get an GPermission object from PolKit to use with Gtk.LockButton
@@ -60,19 +60,72 @@ APP_MENU = """
 """
 
 
-class MyFactory(Gtk.ListItemFactory):
-    def __init__(self):
-        super(MyFactory, self).__init__()
-        print(self.__dict__)
-
-
-
 class ListElem(GObject.GObject):
 
     def __init__(self, name: str, state: bool):
         super(ListElem, self).__init__()
         self.name = name
         self.state = state
+
+    def __repr__(self):
+        return f'ListElem(name: {self.name} state: {self.state})'
+
+
+class MyListView(ListView):
+
+    def __init__(self):
+        # Init ListView with store model class.
+        super(MyListView, self).__init__(ListElem)
+        self.listview.set_vexpand(True)
+        self.listview.set_margin_start(50)
+        self.listview.set_margin_end(50)
+        self.listview.set_margin_bottom(50)
+        # put some data into the model
+        self.add(ListElem("One", True))
+        self.add(ListElem("Two", False))
+        self.add(ListElem("Three", True))
+        self.add(ListElem("Four", False))
+
+    def factory_setup(self, widget: Gtk.ListView, item: Gtk.ListItem):
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        label = Gtk.Label()
+        label.set_halign(Gtk.Align.START)
+        label.set_hexpand(True)
+        label.set_margin_start(10)
+        switch = Gtk.Switch()
+        switch.set_halign(Gtk.Align.END)
+        switch.set_margin_end(10)
+        box.append(label)
+        box.append(switch)
+        item.set_child(box)
+
+    def factory_bind(self, widget: Gtk.ListView, item: Gtk.ListItem):
+        # get the Gtk.Box stored in the ListItem
+        box = item.get_child()
+        # get the model item, connected to current ListItem
+        data = item.get_item()
+        # get the Gtk.Label (first item in box)
+        label = box.get_first_child()
+        # get the Gtk.Switch (next sibling to the Label)
+        switch = label.get_next_sibling()
+        # Update Gtk.Label with data from model item
+        label.set_text(data.name)
+        # Update Gtk.Switch with data from model item
+        switch.set_state(data.state)
+        item.set_child(box)
+
+    def factory_unbind(self, widget: Gtk.ListView, item: Gtk.ListItem):
+        # abstract method:  overload in subclass
+        pass
+
+    def factory_teardown(self, widget: Gtk.ListView, item: Gtk.ListItem):
+        # abstract method:  overload in subclass
+        pass
+
+    def selection_changed(self, widget, ndx):
+        """ trigged when selecting in listview is changed"""
+        # abstract method:  overload in subclass
+        print(f'selected element : {self.store[ndx]}')
 
 
 class MyWindow(Window):
@@ -382,79 +435,16 @@ class MyWindow(Window):
         label.set_xalign(0.0)
         content.append(label)
         self.page5_label = label
-        # List View
-        # Use the signal Factory, so we can connect our own methods to setup
-        self.factory = Gtk.SignalListItemFactory()
-        # connect to factory signals
-        self.factory.connect('setup', self.on_factory_setup)
-        self.factory.connect('bind', self.on_factory_bind)
-        # self.factory.connect('unbind', self.on_factory_unbind)
-        # self.factory.connect('teardown', self.on_factory_teardown)
+        self.listview = MyListView()
         sw = Gtk.ScrolledWindow()
         # Create Gtk.Listview
-        self.listview = Gtk.ListView.new()
-        self.listview.set_vexpand(True)
-        self.listview.set_margin_start(50)
-        self.listview.set_margin_end(50)
-        self.listview.set_margin_bottom(50)
-        self.listview.set_factory(self.factory)
-        # Create data model, use our own class as elements
-        self.store = Gio.ListStore.new(ListElem)
-        # put some data into the model
-        self.store.append(ListElem("One", True))
-        self.store.append(ListElem("Two", False))
-        self.store.append(ListElem("Three", True))
-        self.store.append(ListElem("Four", False))
-        # create a selection model containing our data model
-        self.model = Gtk.SingleSelection.new(self.store)
-        # set the selection model to the view
-        self.listview.set_model(self.model)
-        sw.set_child(self.listview)
+        sw.set_child(self.listview.widget)
         content.append(sw)
         frame.set_child(content)
         # Add the content box as a new page in the stack
         return self.stack.add_page(name, title, frame)
 
-# ---------------------- Handlers --------------------------
-
-    def on_factory_setup(self, widget, item):
-        """ Setup the widgets to go into the ListView """
-        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        label = Gtk.Label()
-        label.set_halign(Gtk.Align.START)
-        label.set_hexpand(True)
-        label.set_margin_start(10)
-        switch = Gtk.Switch()
-        switch.set_halign(Gtk.Align.END)
-        switch.set_margin_end(10)
-        box.append(label)
-        box.append(switch)
-        item.set_child(box)
-
-    def on_factory_bind(self, widget, item: Gtk.ListItem):
-        """ apply data from model to widgets set in setup"""
-        # get the Gtk.Box stored in the ListItem
-        box = item.get_child()
-        # get the model item, connected to current ListItem
-        data = item.get_item()
-        # get the Gtk.Label (first item in box)
-        label=box.get_first_child()
-        # get the Gtk.Switch (next sibling to the Label)
-        switch = label.get_next_sibling()
-        # Update Gtk.Label with data from model item
-        label.set_text(data.name)
-        # Update Gtk.Switch with data from model item
-        switch.set_state(data.state)
-        item.set_child(box)
-
-
-    def on_factory_unbind(self, widget, item):
-        print(f'unbind : {widget=} {item=}')
-        item.set_child(None)
-
-    def on_factory_teardown(self, widget, item):
-        print(f'teardown : {widget=} {item=}')
-
+    # ---------------------- Handlers --------------------------
 
     def menu_handler(self, action, state):
         """ Callback for  menu actions"""

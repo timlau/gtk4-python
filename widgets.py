@@ -24,12 +24,91 @@ So you can create an cool application, without all the boilerplate code
 """
 import os.path
 import gi
+
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk, Gio, GLib
 
 
 def get_font_markup(fontdesc, text):
     return f'<span font_desc="{fontdesc}">{text}</span>'
+
+
+class ListView:
+
+    def __init__(self, model_cls):
+        # Use the signal Factory, so we can connect our own methods to setup
+        self.factory = Gtk.SignalListItemFactory()
+        # connect to factory signals
+        self.factory.connect('setup', self.on_factory_setup)
+        self.factory.connect('bind', self.on_factory_bind)
+        self.factory.connect('unbind', self.on_factory_unbind)
+        self.factory.connect('teardown', self.on_factory_teardown)
+        self.listview = Gtk.ListView.new()
+        self.listview.set_factory(self.factory)
+        # Create data model, use our own class as elements
+        self.store = Gio.ListStore.new(model_cls)
+        # create a selection model containing our data model
+        self.model = Gtk.SingleSelection.new(self.store)
+        self.model.connect('selection-changed', self.on_selection_changed)
+        # set the selection model to the view
+        self.listview.set_model(self.model)
+
+    @property
+    def widget(self):
+        return self.listview
+
+    def add(self, elem):
+        """ add element to the data model """
+        self.store.append(elem)
+
+    def on_factory_setup(self, widget, item):
+        """ Setup the widgets to go into the ListView """
+        self.factory_setup(widget, item)
+
+    def on_factory_bind(self, widget: Gtk.ListView, item: Gtk.ListItem):
+        """ apply data from model to widgets set in setup"""
+        self.factory_bind(widget, item)
+
+    def on_factory_unbind(self, widget, item):
+        self.factory_unbind(widget, item)
+
+    def on_factory_teardown(self, widget, item):
+        self.factory_teardown(widget, item)
+
+    def on_selection_changed(self, widget, position, n_items):
+        # get the current selection (GtkBitset)
+        selection = widget.get_selection()
+        # the the first value in the GtkBitset, that contain the index of the selection in the data model
+        # as we use Gtk.SingleSelection, there can only be one ;-)
+        ndx = selection.get_nth(0)
+        self.selection_changed(widget, ndx)
+
+    # --------------------> abstract methods <--------------------------------
+
+    def factory_setup(self, widget: Gtk.ListView, item: Gtk.ListItem):
+        """ Setup the widgets to go into the ListView """
+        # abstract method:  overload in subclass
+        pass
+
+    def factory_bind(self, widget: Gtk.ListView, item: Gtk.ListItem):
+        """ apply data from model to widgets set in setup"""
+        # abstract method:  overload in subclass
+        pass
+
+    def factory_unbind(self, widget: Gtk.ListView, item: Gtk.ListItem):
+        # abstract method:  overload in subclass
+        pass
+
+    def factory_teardown(self, widget: Gtk.ListView, item: Gtk.ListItem):
+        # abstract method:  overload in subclass
+        pass
+
+    def selection_changed(self, widget, ndx):
+        """ trigged when selecting in listview is changed
+        ndx: is the index in the data store model that is selected
+        """
+        # abstract method:  overload in subclass
+        pass
 
 
 class Selector:
@@ -73,7 +152,7 @@ class TextSelector(Selector):
         label = Gtk.Label()
         label.set_markup(markup)
         # set the widget size request to 32x32 px, so we get some margins
-        #label.set_size_request(100, 24)
+        # label.set_size_request(100, 24)
         label.set_single_line_mode(True)
         label.set_halign(Gtk.Align.START)
         label.set_hexpand(True)
@@ -205,7 +284,7 @@ class Window:
                 print(f"Error loading CSS : {e} ")
                 return None
             print(f'loading custom styling : {css_fn}')
-        return  css_provider
+        return css_provider
 
     def _add_widget_styling(self, widget):
         if self.css_provider:
@@ -217,7 +296,6 @@ class Window:
         # iterate children recursive
         for child in widget:
             self.add_custom_styling(child)
-
 
     @property
     def widget(self):
