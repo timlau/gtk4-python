@@ -1,23 +1,25 @@
-#    Copyright (C) 2021 Tim Lauridsen < tla[at]rasmil.dk >
+#  Copyright (C) 2021 Tim Lauridsen < tla[at]rasmil.dk >
 #
-#    This program is free software; you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation; either version 3 of the License, or
-#    (at your option) any later version.
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
 #
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
 #
-#    You should have received a copy of the GNU General Public License
-#    along with this program; if not, write to
-#    the Free Software Foundation, Inc.,
-#    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to
+#  the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+#
 
 """
 Sample Python Gtk4 Application
 """
+
 import time
 
 import gi
@@ -131,7 +133,7 @@ class MyListView(ListView):
         markup = self.win._get_text_markup(f'Row {ndx} was selected ( {self.store[ndx]} )')
         self.win.page4_label.set_markup(markup)
 
-    def switch_changed(self, widget, state,  pos):
+    def switch_changed(self, widget, state, pos):
         # update the data model, with current state
         elem = self.store[pos]
         elem.state = state
@@ -406,7 +408,6 @@ class MyWindow(Window):
         self.add_custom_styling(frame)
         # Add the content box as a new page in the stack
         return self.stack.add_page(name, title, frame)
-
 
     def setup_page_four(self, name, title):
         """ Add a page with a text selector to the stack"""
