@@ -73,9 +73,10 @@ class ListElem(GObject.GObject):
 
 class MyListView(ListView):
 
-    def __init__(self):
+    def __init__(self, win):
         # Init ListView with store model class.
         super(MyListView, self).__init__(ListElem)
+        self.win = win
         self.listview.set_vexpand(True)
         self.listview.set_margin_start(50)
         self.listview.set_margin_end(50)
@@ -112,6 +113,8 @@ class MyListView(ListView):
         label.set_text(data.name)
         # Update Gtk.Switch with data from model item
         switch.set_state(data.state)
+        # connect switch to handler, so we can handle changes
+        switch.connect('state-set', self.switch_changed, item.get_position())
         item.set_child(box)
 
     def factory_unbind(self, widget: Gtk.ListView, item: Gtk.ListItem):
@@ -125,7 +128,13 @@ class MyListView(ListView):
     def selection_changed(self, widget, ndx):
         """ trigged when selecting in listview is changed"""
         # abstract method:  overload in subclass
-        print(f'selected element : {self.store[ndx]}')
+        markup = get_font_markup('Noto Sans Regular 14', f'selected: index <b>{ndx}</b> = {self.store[ndx]}')
+        self.win.page5_label.set_markup(markup)
+
+    def switch_changed(self, widget, state,  pos):
+        # update the data model, with current state
+        elem = self.store[pos]
+        elem.state = state
 
 
 class MyWindow(Window):
@@ -435,10 +444,12 @@ class MyWindow(Window):
         label.set_xalign(0.0)
         content.append(label)
         self.page5_label = label
-        self.listview = MyListView()
+        self.listview = MyListView(self)
         sw = Gtk.ScrolledWindow()
         # Create Gtk.Listview
-        sw.set_child(self.listview.widget)
+        lw = self.listview.widget
+        lw.set_margin_top(30)
+        sw.set_child(lw)
         content.append(sw)
         frame.set_child(content)
         # Add the content box as a new page in the stack
