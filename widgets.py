@@ -148,6 +148,7 @@ class ListViewListStore(ListViewBase):
     """ ListView base with an Gio.ListStore as data model
     It can contain misc objects derived from GObject
     """
+
     def __init__(self, model_cls):
         super(ListViewListStore, self).__init__(model_cls)
 
@@ -233,11 +234,11 @@ class IconSelector(SelectorBase):
         self.ndx += 1
 
 
-class SearchBar:
+class SearchBar(Gtk.SearchBar):
     """ Wrapper for Gtk.Searchbar Gtk.SearchEntry"""
 
     def __init__(self, win=None):
-        self.searchbar = Gtk.SearchBar()
+        super(SearchBar, self).__init__()
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         box.set_spacing(10)
         # Add SearchEntry
@@ -249,62 +250,48 @@ class SearchBar:
         btn.set_icon_name('preferences-other-symbolic')
         self.search_options = btn
         box.append(btn)
-        self.searchbar.set_child(box)
+        self.set_child(box)
         # connect search entry to seach bar
-        self.searchbar.connect_entry(self.entry)
+        self.connect_entry(self.entry)
         if win:
             # set key capture from main window, it will show searchbar, when you start typing
-            self.searchbar.set_key_capture_widget(win)
+            self.set_key_capture_widget(win)
         # show close button in search bar
-        self.searchbar.set_show_close_button(True)
+        self.set_show_close_button(True)
         # Set search mode to off by default
-        self.searchbar.set_search_mode(False)
+        self.set_search_mode(False)
 
-    @property
-    def widget(self):
-        """Return the root widget for this class"""
-        return self.searchbar
-
-    def connect(self, callback):
+    def set_callback(self, callback):
         """ Connect the search entry activate to an callback handler"""
         self.entry.connect('activate', callback)
 
-    def set_search_mode(self, mode):
-        """ Set the search mode (search bar is shown and active """
-        self.searchbar.set_search_mode(mode)
 
-
-class MenuButton:
+class MenuButton(Gtk.MenuButton):
     """
     Wrapper class for at Gtk.Menubutton with a menu defined
     in a Gtk.Builder xml string
     """
 
     def __init__(self, xml, name, icon_name='open-menu-symbolic'):
+        super(MenuButton, self).__init__()
         builder = Gtk.Builder()
         builder.add_from_string(xml)
         menu = builder.get_object(name)
-        self.widget = Gtk.MenuButton()
-        self.widget.set_menu_model(menu)
-        self.widget.set_icon_name(icon_name)
+        self.set_menu_model(menu)
+        self.set_icon_name(icon_name)
 
 
-class Stack:
+class Stack(Gtk.Stack):
     """ Wrapper for Gtk.Stack with  with a StackSwitcher """
 
     def __init__(self):
+        super(Stack, self).__init__()
         self.switcher = Gtk.StackSwitcher()
-        self.stack = Gtk.Stack()
-        self.switcher.set_stack(self.stack)
+        self.switcher.set_stack(self)
         self._pages = {}
 
-    @property
-    def widget(self):
-        """Return the root widget for this class"""
-        return self.stack
-
     def add_page(self, name, title, widget):
-        page = self.stack.add_child(widget)
+        page = self.add_child(widget)
         page.set_name(name)
         page.set_title(title)
         self._pages[name] = page

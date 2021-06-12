@@ -209,7 +209,7 @@ class MyWindow(Window):
         self.revealer = None
         # Add Menu Button to the titlebar (Right Side)
         menu = MenuButton(APP_MENU, 'app-menu')
-        self.headerbar.pack_end(menu.widget)
+        self.headerbar.pack_end(menu)
         # Create actions to handle menu actions
         self.create_action('new', self.menu_handler)
         self.create_action('about', self.menu_handler)
@@ -227,12 +227,13 @@ class MyWindow(Window):
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         # Search Bar
         self.search = SearchBar(self)
-        content.append(self.search.widget)
+        content.append(self.search)
         # search bar is active by default
-        self.search.connect(self.on_search)
+        self.search.set_callback(self.on_search)
 
         # Stack
         self.stack = Stack()
+
         # Stack Page 1
         self.page1 = self.setup_page_one('page1', 'Page 1')
         # Stack Page 2
@@ -246,7 +247,7 @@ class MyWindow(Window):
         # add stack switcher to center of titlebar
         self.headerbar.set_title_widget(self.stack.switcher)
         # Add stack to window
-        content.append(self.stack.widget)
+        content.append(self.stack)
         # Add main content box to window
         self.set_child(content)
 
