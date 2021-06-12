@@ -37,7 +37,9 @@ def get_font_markup(fontdesc, text):
 
 
 class ListView(Gtk.ListView):
-    """ ListView abstact base class """
+    """ ListView base class, it setup the basic factory, selection model & data model
+    handlers must be overloaded & implemented in a sub class
+    """
 
     def __init__(self, model_cls):
         Gtk.ListView.__init__(self)
@@ -50,12 +52,24 @@ class ListView(Gtk.ListView):
         self.factory.connect('unbind', self.on_factory_unbind)
         self.factory.connect('teardown', self.on_factory_teardown)
         self.set_factory(self.factory)  # Create data model, use our own class as elements
-        self.store = Gio.ListStore.new(model_cls)
+        self.store = self.setup_store(model_cls)
         # create a selection model containing our data model
-        self.model = Gtk.SingleSelection.new(self.store)
+        self.model = self.setup_model(self.store)
         self.model.connect('selection-changed', self.on_selection_changed)
         # set the selection model to the view
         self.set_model(self.model)
+
+    def setup_model(self, store: Gio.ListModel) -> Gtk.SelectionModel:
+        """  Setup the selection model to use in Gtk.ListView
+        Can be overloaded in subclass to use another Gtk.SelectModel model
+        """
+        return Gtk.SingleSelection.new(store)
+
+    def setup_store(self, model_cls) -> Gio.ListModel:
+        """ Setup the data model
+        Can be overloaded in subclass to use another Gio.ListModel
+        """
+        return Gio.ListStore.new(model_cls)
 
     def add(self, elem):
         """ add element to the data model """
