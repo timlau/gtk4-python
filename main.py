@@ -86,9 +86,6 @@ class MyListViewStrings(ListViewStrings):
         super(MyListViewStrings, self).__init__()
         self.win = win
         self.set_vexpand(True)
-        self.set_margin_start(20)
-        self.set_margin_end(20)
-        self.set_margin_bottom(20)
         # put some data into the model
         for i in range(1000):
             self.add(f'Item {i}')
@@ -131,10 +128,8 @@ class MyListView(ListViewListStore):
         # Init ListView with store model class.
         super(MyListView, self).__init__(ListElem)
         self.win = win
-        self.set_vexpand(True)
-        self.set_margin_start(20)
-        self.set_margin_end(20)
-        self.set_margin_bottom(20)
+        self.set_valign(Gtk.Align.FILL)
+        # self.set_vexpand(True)
         # put some data into the model
         self.add(ListElem("One", True))
         self.add(ListElem("Two", False))
@@ -479,16 +474,14 @@ class MyWindow(Window):
         self.page4_label = label
         self.listview = MyListView(self)
         lw_frame = Gtk.Frame()
+        lw_frame.set_valign(Gtk.Align.FILL)
         lw_frame.set_margin_start(20)
         lw_frame.set_margin_end(20)
         lw_frame.set_margin_top(20)
         lw_frame.set_margin_bottom(20)
-        sw = Gtk.ScrolledWindow()
         # Create Gtk.Listview
         lw = self.listview
-        lw.set_margin_top(20)
-        sw.set_child(lw)
-        lw_frame.set_child(sw)
+        lw_frame.set_child(lw)
         content.append(lw_frame)
         self.listview_str = MyListViewStrings(self)
         lw_frame = Gtk.Frame()
@@ -499,7 +492,6 @@ class MyWindow(Window):
         sw = Gtk.ScrolledWindow()
         # Create Gtk.Listview
         lw = self.listview_str
-        lw.set_margin_top(20)
         sw.set_child(lw)
         lw_frame.set_child(sw)
         content.append(lw_frame)

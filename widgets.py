@@ -177,7 +177,7 @@ class SelectorBase(Gtk.ListBox):
         Gtk.ListBox.__init__(self)
         # Setup the listbox
         self.set_selection_mode(Gtk.SelectionMode.SINGLE)
-        super().connect('row-selected', self.on_row_changes)
+        self.connect('row-selected', self.on_row_changes)
         self._rows = {}
         self.ndx = 0
         self.callback = None
