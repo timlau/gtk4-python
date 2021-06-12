@@ -169,14 +169,14 @@ class ListViewStrings(ListViewBase):
         return Gtk.StringList()
 
 
-class Selector:
+class SelectorBase(Gtk.ListBox):
     """ Selector base class """
 
     def __init__(self):
+        Gtk.ListBox.__init__(self)
         # Setup the listbox
-        self.listbox = Gtk.ListBox()
-        self.listbox.set_selection_mode(Gtk.SelectionMode.SINGLE)
-        self.listbox.connect('row-selected', self.on_row_changes)
+        self.set_selection_mode(Gtk.SelectionMode.SINGLE)
+        super().connect('row-selected', self.on_row_changes)
         self._rows = {}
         self.ndx = 0
         self.callback = None
@@ -192,16 +192,11 @@ class Selector:
         else:
             print(f'Row Selected : {self._rows[ndx]}')
 
-    def connect(self, callback):
+    def set_callback(self, callback):
         self.callback = callback
 
-    @property
-    def widget(self) -> Gtk.ListBox:
-        """Return the root widget for this class"""
-        return self.listbox
 
-
-class TextSelector(Selector):
+class TextSelector(SelectorBase):
     """ Vertical Selector Widget that contains a number of strings where one can be selected """
 
     def add_row(self, name: str, markup: str):
@@ -217,13 +212,13 @@ class TextSelector(Selector):
         label.set_xalign(0)
         label.set_margin_start(5)
         label.set_margin_end(10)
-        row = self.listbox.append(label)
+        row = self.append(label)
         # store the index names, so we can find it on selection
         self._rows[self.ndx] = name
         self.ndx += 1
 
 
-class IconSelector(Selector):
+class IconSelector(SelectorBase):
     """ Vertical Selector Widget that contains a number of icons where one can be selected """
 
     def add_row(self, name, icon_name):
@@ -232,7 +227,7 @@ class IconSelector(Selector):
         pix = Gtk.Image.new_from_icon_name(icon_name)
         # set the widget size request to 32x32 px, so we get some margins
         pix.set_size_request(32, 32)
-        row = self.listbox.append(pix)
+        row = self.append(pix)
         # store the index names, so we can find it on selection
         self._rows[self.ndx] = name
         self.ndx += 1

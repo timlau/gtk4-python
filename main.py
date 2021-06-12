@@ -289,8 +289,8 @@ class MyWindow(Window):
         selector.add_row("row2", "software-update-available-symbolic")
         selector.add_row("row3", "drive-multidisk-symbolic")
         selector.add_row("row4", "insert-object-symbolic")
-        selector.connect(self.on_select_icon_selector)
-        main.append(selector.widget)
+        selector.set_callback(self.on_select_icon_selector)
+        main.append(selector)
         frame, content_right, label = self.setup_page_header(name, title)
         self.page1_label = label
         # Lock button
@@ -340,8 +340,8 @@ class MyWindow(Window):
         selector.add_row("Apple", "Apple")
         selector.add_row("Water Melon", "Water Melon")
         selector.add_row("Lollypop", "Lollypop")
-        selector.connect(self.on_select_text_selector)
-        main.append(selector.widget)
+        selector.set_callback(self.on_select_text_selector)
+        main.append(selector)
         # Add a label with custom font in the center
         frame, content_right, label = self.setup_page_header(name, title)
         self.page2_label = label
