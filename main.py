@@ -19,7 +19,7 @@
 """
 Sample Python Gtk4 Application
 """
-
+import sys
 import time
 
 import gi
@@ -27,7 +27,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version('Polkit', '1.0')
 
-from gi.repository import Gtk, Polkit, GObject
+from gi.repository import Gtk, Polkit, GObject, Gio
 from widgets import Window, Stack, MenuButton, get_font_markup, SearchBar, IconSelector, TextSelector, ListView
 
 
@@ -480,19 +480,22 @@ class MyWindow(Window):
         self.page1_label.set_markup(markup)
 
 
-def on_activate(app):
-    """
-    Gtk.Application activate callback, called when application is run
-    We use this to create the application window and show it
-    """
-    # Create the application windows
-    win = MyWindow(app, "My Gtk4 Application", 800, 800, css='main.css')
-    # Show the window (widget)
-    Gtk.Widget.show(win.widget)
+class Application(Gtk.Application):
+    def __init__(self):
+        super().__init__(application_id='dk.rasmil.Example',
+                         flags=Gio.ApplicationFlags.FLAGS_NONE)
+
+    def do_activate(self):
+        win = self.props.active_window
+        if not win:
+            win = MyWindow(self, "My Gtk4 Application", 800, 800, css='main.css')
+        win.window.present()
+
+
+def main():
+    app = Application()
+    return app.run(sys.argv)
 
 
 if __name__ == '__main__':
-    # Create the main Gtk Application an connect the activate callback and run the application
-    app = Gtk.Application(application_id='dk.rasmil.Example')
-    app.connect('activate', on_activate)
-    app.run(None)
+    main()
