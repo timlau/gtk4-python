@@ -23,6 +23,9 @@ So you can create an cool application, without all the boilerplate code
 
 """
 import os.path
+
+from abc import abstractmethod
+
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -33,45 +36,60 @@ def get_font_markup(fontdesc, text):
     return f'<span font_desc="{fontdesc}">{text}</span>'
 
 
-class ListView:
+class ListView(Gtk.ListView):
+    """ ListView abstact base class """
 
     def __init__(self, model_cls):
+        Gtk.ListView.__init__(self)
         # Use the signal Factory, so we can connect our own methods to setup
         self.factory = Gtk.SignalListItemFactory()
-        # connect to factory signals
+        # connect to Gtk.SignalListItemFactory signals
+        # check https://docs.gtk.org/gtk4/class.SignalListItemFactory.html for details
         self.factory.connect('setup', self.on_factory_setup)
         self.factory.connect('bind', self.on_factory_bind)
         self.factory.connect('unbind', self.on_factory_unbind)
         self.factory.connect('teardown', self.on_factory_teardown)
-        self.listview = Gtk.ListView.new()
-        self.listview.set_factory(self.factory)        # Create data model, use our own class as elements
+        self.set_factory(self.factory)  # Create data model, use our own class as elements
         self.store = Gio.ListStore.new(model_cls)
         # create a selection model containing our data model
         self.model = Gtk.SingleSelection.new(self.store)
         self.model.connect('selection-changed', self.on_selection_changed)
         # set the selection model to the view
-        self.listview.set_model(self.model)
-
-    @property
-    def widget(self):
-        return self.listview
+        self.set_model(self.model)
 
     def add(self, elem):
         """ add element to the data model """
         self.store.append(elem)
 
-    def on_factory_setup(self, widget, item):
-        """ Setup the widgets to go into the ListView """
+    # Gtk.SignalListItemFactory signal callbacks
+    # transfer to some some callback stubs, there can be overloaded in
+    # a subclass.
+
+    def on_factory_setup(self, widget, item: Gtk.ListItem):
+        """ GtkSignalListItemFactory::setup signal callback
+
+        Setup the widgets to go into the ListView """
+
         self.factory_setup(widget, item)
 
     def on_factory_bind(self, widget: Gtk.ListView, item: Gtk.ListItem):
-        """ apply data from model to widgets set in setup"""
+        """ GtkSignalListItemFactory::bind signal callback
+
+        apply data from model to widgets set in setup"""
         self.factory_bind(widget, item)
 
-    def on_factory_unbind(self, widget, item):
+    def on_factory_unbind(self, widget, item: Gtk.ListItem):
+        """ GtkSignalListItemFactory::unbind signal callback
+
+        Undo the the binding done in ::bind if needed
+        """
         self.factory_unbind(widget, item)
 
-    def on_factory_teardown(self, widget, item):
+    def on_factory_teardown(self, widget, item: Gtk.ListItem):
+        """ GtkSignalListItemFactory::setup signal callback
+
+        Undo the creation done in ::setup if needed
+        """
         self.factory_teardown(widget, item)
 
     def on_selection_changed(self, widget, position, n_items):
@@ -82,31 +100,32 @@ class ListView:
         ndx = selection.get_nth(0)
         self.selection_changed(widget, ndx)
 
-    # --------------------> abstract methods <--------------------------------
+    # --------------------> abstract callback methods <--------------------------------
+    # Implement these methods in your subclass
 
+    @abstractmethod
     def factory_setup(self, widget: Gtk.ListView, item: Gtk.ListItem):
-        """ Setup the widgets to go into the ListView """
-        # abstract method:  overload in subclass
+        """ Setup the widgets to go into the ListView (Overload in subclass) """
         pass
 
+    @abstractmethod
     def factory_bind(self, widget: Gtk.ListView, item: Gtk.ListItem):
-        """ apply data from model to widgets set in setup"""
-        # abstract method:  overload in subclass
+        """ apply data from model to widgets set in setup (Overload in subclass)"""
         pass
 
+    @abstractmethod
     def factory_unbind(self, widget: Gtk.ListView, item: Gtk.ListItem):
-        # abstract method:  overload in subclass
         pass
 
+    @abstractmethod
     def factory_teardown(self, widget: Gtk.ListView, item: Gtk.ListItem):
-        # abstract method:  overload in subclass
         pass
 
+    @abstractmethod
     def selection_changed(self, widget, ndx):
         """ trigged when selecting in listview is changed
         ndx: is the index in the data store model that is selected
         """
-        # abstract method:  overload in subclass
         pass
 
 
@@ -137,7 +156,7 @@ class Selector:
         self.callback = callback
 
     @property
-    def widget(self):
+    def widget(self) -> Gtk.ListBox:
         """Return the root widget for this class"""
         return self.listbox
 
@@ -145,7 +164,7 @@ class Selector:
 class TextSelector(Selector):
     """ Vertical Selector Widget that contains a number of strings where one can be selected """
 
-    def add_row(self, name, markup):
+    def add_row(self, name: str, markup: str):
         """ Add a named row to the selector with at given icon name"""
         # get the image
         label = Gtk.Label()
@@ -257,24 +276,22 @@ class Stack:
         return page
 
 
-class Window:
-    """ Wrapper for Gtk.ApplicationWindow with a headerbar"""
+class Window(Gtk.ApplicationWindow):
+    """ custom Gtk.ApplicationWindow with a headerbar"""
 
-    def __init__(self, app, title, width, height, css=None):
-        self.app = app
-        self.window = Gtk.ApplicationWindow(application=app)
-        self.window.set_default_size(width, height)
+    def __init__(self, title, width, height, **kwargs):
+        super(Window, self).__init__(**kwargs)
+        self.set_default_size(width, height)
         self.headerbar = Gtk.HeaderBar()
-        self.window.set_titlebar(self.headerbar)
+        self.set_titlebar(self.headerbar)
         label = Gtk.Label()
         label.set_text(title)
         self.headerbar.set_title_widget(label)
-        # load CSS with custom styling
-        self.css_provider = self.load_css(css)
+        # custom CSS provider
+        self.css_provider = None
 
     def load_css(self, css_fn):
         """create a provider for custom styling"""
-        css_provider = None
         if css_fn and os.path.exists(css_fn):
             css_provider = Gtk.CssProvider()
             try:
@@ -283,7 +300,7 @@ class Window:
                 print(f"Error loading CSS : {e} ")
                 return None
             print(f'loading custom styling : {css_fn}')
-        return css_provider
+            self.css_provider = css_provider
 
     def _add_widget_styling(self, widget):
         if self.css_provider:
@@ -296,13 +313,8 @@ class Window:
         for child in widget:
             self.add_custom_styling(child)
 
-    @property
-    def widget(self):
-        """Return the root widget for this class"""
-        return self.window
-
-    def add_action(self, name, callback):
+    def create_action(self, name, callback):
         """ Add an Action and connect to a callback """
         action = Gio.SimpleAction.new(name, None)
         action.connect("activate", callback)
-        self.window.add_action(action)
+        self.add_action(action)

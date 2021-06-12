@@ -31,8 +31,11 @@ from gi.repository import Gtk, Polkit, GObject, Gio
 from widgets import Window, Stack, MenuButton, get_font_markup, SearchBar, IconSelector, TextSelector, ListView
 
 
-# Get an GPermission object from PolKit to use with Gtk.LockButton
 def get_permision(action_id='org.freedesktop.accounts.user-administration'):
+    """
+    Get an GPermission object from PolKit to use with Gtk.LockButton
+    @param action_id: is just an example there exist on at Fedora 34 workstation
+    """
     prem = Polkit.Permission.new_sync(action_id, None, None)
     # print(prem.acquire())
     return prem
@@ -63,7 +66,7 @@ APP_MENU = """
 
 
 class ListElem(GObject.GObject):
-
+    """ custom data element for a ListView model (Must be based on GObject) """
     def __init__(self, name: str, state: bool):
         super(ListElem, self).__init__()
         self.name = name
@@ -74,15 +77,15 @@ class ListElem(GObject.GObject):
 
 
 class MyListView(ListView):
-
-    def __init__(self, win):
+    """ Custom ListView wrapper """
+    def __init__(self, win: Gtk.ApplicationWindow):
         # Init ListView with store model class.
         super(MyListView, self).__init__(ListElem)
         self.win = win
-        self.listview.set_vexpand(True)
-        self.listview.set_margin_start(50)
-        self.listview.set_margin_end(50)
-        self.listview.set_margin_bottom(50)
+        self.set_vexpand(True)
+        self.set_margin_start(50)
+        self.set_margin_end(50)
+        self.set_margin_bottom(50)
         # put some data into the model
         self.add(ListElem("One", True))
         self.add(ListElem("Two", False))
@@ -90,6 +93,10 @@ class MyListView(ListView):
         self.add(ListElem("Four", False))
 
     def factory_setup(self, widget: Gtk.ListView, item: Gtk.ListItem):
+        """ Gtk.SignalListItemFactory::setup signal callback (overloaded from parent class)
+
+        Handles the creation widgets to put in the ListView
+        """
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         label = Gtk.Label()
         label.set_halign(Gtk.Align.START)
@@ -103,6 +110,10 @@ class MyListView(ListView):
         item.set_child(box)
 
     def factory_bind(self, widget: Gtk.ListView, item: Gtk.ListItem):
+        """ Gtk.SignalListItemFactory::bind signal callback (overloaded from parent class)
+
+        Handles adding data for the model to the widgets created in setup
+        """
         # get the Gtk.Box stored in the ListItem
         box = item.get_child()
         # get the model item, connected to current ListItem
@@ -120,20 +131,19 @@ class MyListView(ListView):
         item.set_child(box)
 
     def factory_unbind(self, widget: Gtk.ListView, item: Gtk.ListItem):
-        # abstract method:  overload in subclass
+        """ Gtk.SignalListItemFactory::unbind signal callback (overloaded from parent class) """
         pass
 
     def factory_teardown(self, widget: Gtk.ListView, item: Gtk.ListItem):
-        # abstract method:  overload in subclass
+        """ Gtk.SignalListItemFactory::teardown signal callback (overloaded from parent class """
         pass
 
-    def selection_changed(self, widget, ndx):
+    def selection_changed(self, widget, ndx: int):
         """ trigged when selecting in listview is changed"""
-        # abstract method:  overload in subclass
         markup = self.win._get_text_markup(f'Row {ndx} was selected ( {self.store[ndx]} )')
         self.win.page4_label.set_markup(markup)
 
-    def switch_changed(self, widget, state, pos):
+    def switch_changed(self, widget, state: bool, pos: int):
         # update the data model, with current state
         elem = self.store[pos]
         elem.state = state
@@ -143,15 +153,18 @@ class MyListView(ListView):
 
 class MyWindow(Window):
 
-    def __init__(self, app, title, width, height, css):
-        Window.__init__(self, app, title, height, width, css)
+    def __init__(self, title, width, height, **kwargs):
+        super(MyWindow, self).__init__(title, height, width, **kwargs)
+        # load the custom css, so we can use it later
+        self.load_css('main.css')
         self.revealer = None
         # Add Menu Button to the titlebar (Right Side)
         menu = MenuButton(APP_MENU, 'app-menu')
         self.headerbar.pack_end(menu.widget)
-        self.add_action('new', self.menu_handler)
-        self.add_action('about', self.menu_handler)
-        self.add_action('quit', self.menu_handler)
+        # Create actions to handle menu actions
+        self.create_action('new', self.menu_handler)
+        self.create_action('about', self.menu_handler)
+        self.create_action('quit', self.menu_handler)
 
         # make a new title label and add it to the left.
         # So we kan place the stack switcher in the middle
@@ -164,7 +177,7 @@ class MyWindow(Window):
         # Main content box
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         # Search Bar
-        self.search = SearchBar(self.window)
+        self.search = SearchBar(self)
         content.append(self.search.widget)
         # search bar is active by default
         self.search.connect(self.on_search)
@@ -185,10 +198,11 @@ class MyWindow(Window):
         self.headerbar.set_title_widget(self.stack.switcher)
         # Add stack to window
         content.append(self.stack.widget)
-        # Add main content box to windows
-        self.window.set_child(content)
+        # Add main content box to window
+        self.set_child(content)
 
     def setup_page_header(self, name, title):
+        """ setup the common widgets for each page """
         # Content box for the page
         frame = Gtk.Frame()
         # Set Frame Margins
@@ -196,7 +210,6 @@ class MyWindow(Window):
         frame.set_margin_start(15)
         frame.set_margin_end(15)
         frame.set_margin_bottom(15)
-
         # Content box for the page
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         # Add a label with custom font in the center
@@ -206,7 +219,7 @@ class MyWindow(Window):
         label.set_markup(markup)
         label.set_valign(Gtk.Align.CENTER)
         content.append(label)
-        # Output label to write stuff
+        # Output label to write user action on the page
         label = Gtk.Label()
         label.set_margin_top(20)
         label.set_margin_start(20)
@@ -227,7 +240,7 @@ class MyWindow(Window):
         selector.add_row("row2", "software-update-available-symbolic")
         selector.add_row("row3", "drive-multidisk-symbolic")
         selector.add_row("row4", "insert-object-symbolic")
-        selector.connect(self.on_select_page1)
+        selector.connect(self.on_select_icon_selector)
         main.append(selector.widget)
         frame, content_right, label = self.setup_page_header(name, title)
         self.page1_label = label
@@ -278,7 +291,7 @@ class MyWindow(Window):
         selector.add_row("Apple", "Apple")
         selector.add_row("Water Melon", "Water Melon")
         selector.add_row("Lollypop", "Lollypop")
-        selector.connect(self.on_select_page2)
+        selector.connect(self.on_select_text_selector)
         main.append(selector.widget)
         # Add a label with custom font in the center
         frame, content_right, label = self.setup_page_header(name, title)
@@ -288,7 +301,7 @@ class MyWindow(Window):
         return self.stack.add_page(name, title, main)
 
     def setup_page_three(self, name, title):
-        """ Add a page with a text selector to the stack"""
+        """ Add a page with css styled content to the stack"""
         # Content box for the page
 
         frame = Gtk.Frame()
@@ -417,7 +430,7 @@ class MyWindow(Window):
         self.listview = MyListView(self)
         sw = Gtk.ScrolledWindow()
         # Create Gtk.Listview
-        lw = self.listview.widget
+        lw = self.listview
         lw.set_margin_top(30)
         sw.set_child(lw)
         content.append(sw)
@@ -426,10 +439,11 @@ class MyWindow(Window):
         return self.stack.add_page(name, title, frame)
 
     def setup_page_five(self, name, title):
-        """ Add a page with a text selector to the stack"""
+        """ Add a new page to the stack"""
         # Content box for the page
         frame, content, label = self.setup_page_header(name, title)
         self.page5_label = label
+        # TODO: Add some real content to page 5
         # Add the content box as a new page in the stack
         return self.stack.add_page(name, title, frame)
 
@@ -445,42 +459,50 @@ class MyWindow(Window):
         name = action.get_name()
         print(f'active : {name}')
         if name == 'quit':
-            self.window.close()
+            self.close()
 
     def on_search(self, widget):
+        """ callback for the searchbar entry """
         print(f'Searching for : {widget.get_text()}')
 
-    def on_select_page1(self, name):
+    def on_select_icon_selector(self, name):
+        """ called when icon_selector selection is changed (Page1) """
         markup = self._get_text_markup(f'{name} is selected')
         self.page1_label.set_markup(markup)
 
-    def on_select_page2(self, name):
+    def on_select_text_selector(self, name):
+        """ called when text_selector is changed (Page2) """
         markup = self._get_text_markup(f'{name} is selected')
         self.page2_label.set_markup(markup)
 
     def on_switch_activate(self, widget, state):
+        """ callback for reveal switch (Page3) """
         if self.revealer:
             self.revealer.set_reveal_child(state)
             time.sleep(.5)
             self.top_botton_paned.set_position(1000)
 
     def on_button_clicked(self, widget):
+        """ callback for buttom clicked (Page1) """
         markup = self._get_text_markup(f'{widget.get_label()} was pressed')
         self.page1_label.set_markup(markup)
 
     def on_calendar_changed(self, widget):
+        """ callback for calendar selection (Page1) """
         date = widget.get_date().format('%F')
         txt = f'{date} was selected in calendar'
         markup = self._get_text_markup(txt)
         self.page1_label.set_markup(markup)
 
     def on_entry_activate(self, widget):
+        """ callback for entry actication (Page1) """
         txt = f'{widget.get_buffer().get_text()} was typed in entry'
         markup = self._get_text_markup(txt)
         self.page1_label.set_markup(markup)
 
 
 class Application(Gtk.Application):
+    """ Main Aplication class """
     def __init__(self):
         super().__init__(application_id='dk.rasmil.Example',
                          flags=Gio.ApplicationFlags.FLAGS_NONE)
@@ -488,11 +510,12 @@ class Application(Gtk.Application):
     def do_activate(self):
         win = self.props.active_window
         if not win:
-            win = MyWindow(self, "My Gtk4 Application", 800, 800, css='main.css')
-        win.window.present()
+            win = MyWindow("My Gtk4 Application", 800, 800,  application=self)
+        win.present()
 
 
 def main():
+    """ Run the main application"""
     app = Application()
     return app.run(sys.argv)
 
