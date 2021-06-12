@@ -36,7 +36,7 @@ def get_font_markup(fontdesc, text):
     return f'<span font_desc="{fontdesc}">{text}</span>'
 
 
-class ListView(Gtk.ListView):
+class ListViewBase(Gtk.ListView):
     """ ListView base class, it setup the basic factory, selection model & data model
     handlers must be overloaded & implemented in a sub class
     """
@@ -141,6 +141,22 @@ class ListView(Gtk.ListView):
         ndx: is the index in the data store model that is selected
         """
         pass
+
+
+class ListViewStrings(ListViewBase):
+    """ Add ListView with only strings """
+
+    def __init__(self):
+        super(ListViewStrings, self).__init__(Gtk.StringObject)
+
+    def setup_store(self, model_cls) -> Gio.ListModel:
+        """ Setup the data model
+        Can be overloaded in subclass to use another Gio.ListModel
+        """
+        return Gtk.StringList()
+
+    def add(self, elem: str):
+        super().add(elem)
 
 
 class Selector:

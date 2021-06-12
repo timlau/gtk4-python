@@ -28,7 +28,8 @@ gi.require_version("Gtk", "4.0")
 gi.require_version('Polkit', '1.0')
 
 from gi.repository import Gtk, Polkit, GObject, Gio
-from widgets import Window, Stack, MenuButton, get_font_markup, SearchBar, IconSelector, TextSelector, ListView
+from widgets import Window, Stack, MenuButton, get_font_markup, SearchBar, \
+    IconSelector, TextSelector, ListViewBase, ListViewStrings
 
 
 def get_permision(action_id='org.freedesktop.accounts.user-administration'):
@@ -67,6 +68,7 @@ APP_MENU = """
 
 class ListElem(GObject.GObject):
     """ custom data element for a ListView model (Must be based on GObject) """
+
     def __init__(self, name: str, state: bool):
         super(ListElem, self).__init__()
         self.name = name
@@ -76,16 +78,63 @@ class ListElem(GObject.GObject):
         return f'ListElem(name: {self.name} state: {self.state})'
 
 
-class MyListView(ListView):
-    """ Custom ListView wrapper """
+class MyListViewStrings(ListViewStrings):
+    """ Custom ListView """
+
+    def __init__(self, win: Gtk.ApplicationWindow):
+        # Init ListView with store model class.
+        super(MyListViewStrings, self).__init__()
+        self.win = win
+        self.set_vexpand(True)
+        self.set_margin_start(20)
+        self.set_margin_end(20)
+        self.set_margin_bottom(20)
+        # put some data into the model
+        for i in range(1000):
+            self.add(f'Item {i}')
+
+    def factory_setup(self, widget: Gtk.ListView, item: Gtk.ListItem):
+        """ Gtk.SignalListItemFactory::setup signal callback (overloaded from parent class)
+
+        Handles the creation widgets to put in the ListView
+        """
+        label = Gtk.Label()
+        label.set_halign(Gtk.Align.START)
+        label.set_hexpand(True)
+        label.set_margin_start(10)
+        item.set_child(label)
+
+    def factory_bind(self, widget: Gtk.ListView, item: Gtk.ListItem):
+        """ Gtk.SignalListItemFactory::bind signal callback (overloaded from parent class)
+
+        Handles adding data for the model to the widgets created in setup
+        """
+        # get the Gtk.Label
+        label = item.get_child()
+        # get the model item, connected to current ListItem
+        data = item.get_item()
+        # Update Gtk.Label with data from model item
+        label.set_text(data.get_string())
+        # Update Gtk.Switch with data from model item
+        item.set_child(label)
+
+    def selection_changed(self, widget, ndx: int):
+        """ trigged when selecting in listview is changed"""
+        markup = self.win._get_text_markup(f'Row {ndx} was selected ( {self.store[ndx].get_string()} )')
+        self.win.page4_label.set_markup(markup)
+
+
+class MyListView(ListViewBase):
+    """ Custom ListView """
+
     def __init__(self, win: Gtk.ApplicationWindow):
         # Init ListView with store model class.
         super(MyListView, self).__init__(ListElem)
         self.win = win
         self.set_vexpand(True)
-        self.set_margin_start(50)
-        self.set_margin_end(50)
-        self.set_margin_bottom(50)
+        self.set_margin_start(20)
+        self.set_margin_end(20)
+        self.set_margin_bottom(20)
         # put some data into the model
         self.add(ListElem("One", True))
         self.add(ListElem("Two", False))
@@ -428,12 +477,31 @@ class MyWindow(Window):
         frame, content, label = self.setup_page_header(name, title)
         self.page4_label = label
         self.listview = MyListView(self)
+        lw_frame = Gtk.Frame()
+        lw_frame.set_margin_start(20)
+        lw_frame.set_margin_end(20)
+        lw_frame.set_margin_top(20)
+        lw_frame.set_margin_bottom(20)
         sw = Gtk.ScrolledWindow()
         # Create Gtk.Listview
         lw = self.listview
-        lw.set_margin_top(30)
+        lw.set_margin_top(20)
         sw.set_child(lw)
-        content.append(sw)
+        lw_frame.set_child(sw)
+        content.append(lw_frame)
+        self.listview_str = MyListViewStrings(self)
+        lw_frame = Gtk.Frame()
+        lw_frame.set_margin_start(20)
+        lw_frame.set_margin_end(20)
+        lw_frame.set_margin_top(20)
+        lw_frame.set_margin_bottom(20)
+        sw = Gtk.ScrolledWindow()
+        # Create Gtk.Listview
+        lw = self.listview_str
+        lw.set_margin_top(20)
+        sw.set_child(lw)
+        lw_frame.set_child(sw)
+        content.append(lw_frame)
         frame.set_child(content)
         # Add the content box as a new page in the stack
         return self.stack.add_page(name, title, frame)
@@ -503,6 +571,7 @@ class MyWindow(Window):
 
 class Application(Gtk.Application):
     """ Main Aplication class """
+
     def __init__(self):
         super().__init__(application_id='dk.rasmil.Example',
                          flags=Gio.ApplicationFlags.FLAGS_NONE)
@@ -510,7 +579,7 @@ class Application(Gtk.Application):
     def do_activate(self):
         win = self.props.active_window
         if not win:
-            win = MyWindow("My Gtk4 Application", 800, 800,  application=self)
+            win = MyWindow("My Gtk4 Application", 800, 800, application=self)
         win.present()
 
 
