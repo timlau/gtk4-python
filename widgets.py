@@ -65,11 +65,12 @@ class ListViewBase(Gtk.ListView):
         """
         return Gtk.SingleSelection.new(store)
 
+    @abstractmethod
     def setup_store(self, model_cls) -> Gio.ListModel:
         """ Setup the data model
-        Can be overloaded in subclass to use another Gio.ListModel
+        must be overloaded in subclass to use another Gio.ListModel
         """
-        return Gio.ListStore.new(model_cls)
+        raise NotImplemented
 
     def add(self, elem):
         """ add element to the data model """
@@ -143,6 +144,18 @@ class ListViewBase(Gtk.ListView):
         pass
 
 
+class ListViewListStore(ListViewBase):
+    """ ListView base with an Gio.ListStore as data model
+    It can contain misc objects derived from GObject
+    """
+    def __init__(self, model_cls):
+        super(ListViewListStore, self).__init__(model_cls)
+
+    def setup_store(self, model_cls) -> Gio.ListModel:
+        """ Setup the data model """
+        return Gio.ListStore.new(model_cls)
+
+
 class ListViewStrings(ListViewBase):
     """ Add ListView with only strings """
 
@@ -154,9 +167,6 @@ class ListViewStrings(ListViewBase):
         Can be overloaded in subclass to use another Gio.ListModel
         """
         return Gtk.StringList()
-
-    def add(self, elem: str):
-        super().add(elem)
 
 
 class Selector:

@@ -29,7 +29,7 @@ gi.require_version('Polkit', '1.0')
 
 from gi.repository import Gtk, Polkit, GObject, Gio
 from widgets import Window, Stack, MenuButton, get_font_markup, SearchBar, \
-    IconSelector, TextSelector, ListViewBase, ListViewStrings
+    IconSelector, TextSelector, ListViewStrings, ListViewListStore
 
 
 def get_permision(action_id='org.freedesktop.accounts.user-administration'):
@@ -124,7 +124,7 @@ class MyListViewStrings(ListViewStrings):
         self.win.page4_label.set_markup(markup)
 
 
-class MyListView(ListViewBase):
+class MyListView(ListViewListStore):
     """ Custom ListView """
 
     def __init__(self, win: Gtk.ApplicationWindow):
