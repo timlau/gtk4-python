@@ -29,7 +29,7 @@ gi.require_version('Polkit', '1.0')
 
 from gi.repository import Gtk, Polkit, GObject, Gio
 from widgets import Window, Stack, MenuButton, get_font_markup, SearchBar, \
-    IconSelector, TextSelector, ListViewStrings, ListViewListStore
+    IconSelector, TextSelector, ListViewStrings, ListViewListStore, SwitchRow
 
 
 def get_permision(action_id='org.freedesktop.accounts.user-administration'):
@@ -287,8 +287,8 @@ class MyWindow(Window):
         selector.add_row("row4", "insert-object-symbolic")
         selector.set_callback(self.on_select_icon_selector)
         main.append(selector)
-        frame, content_right, label = self.setup_page_header(name, title)
-        self.page1_label = label
+        page_frame, content_right, lbl = self.setup_page_header(name, title)
+        self.page1_label = lbl
         # Lock button
         lock_btn = Gtk.LockButton.new(get_permision())
         lock_btn.set_margin_top(20)
@@ -322,7 +322,24 @@ class MyWindow(Window):
         calendar.set_halign(Gtk.Align.CENTER)
         calendar.connect('day-selected', self.on_calendar_changed)
         content_right.append(calendar)
-        main.append(frame)
+        # DropDown
+        model = Gtk.StringList()
+        for txt in ['One', 'Two', 'Three', 'Four']:
+            model.append(txt)
+        dropdown = Gtk.DropDown.new(model)
+        dropdown.set_margin_top(20)
+        dropdown.set_margin_start(20)
+        dropdown.set_size_request(200,-1)
+        dropdown.set_halign(Gtk.Align.START)
+        content_right.append(dropdown)
+        # DropDown
+        dropdown = Gtk.DropDown.new_from_strings(['Red', 'Green','Blue','Black', 'White'])
+        dropdown.set_margin_top(20)
+        dropdown.set_margin_start(20)
+        dropdown.set_size_request(200, -1)
+        dropdown.set_halign(Gtk.Align.START)
+        content_right.append(dropdown)
+        main.append(page_frame)
         # Add the content box as a new page in the stack
         return self.stack.add_page(name, title, main)
 
@@ -341,6 +358,47 @@ class MyWindow(Window):
         # Add a label with custom font in the center
         frame, content_right, label = self.setup_page_header(name, title)
         self.page2_label = label
+        # Overlay
+        overlay_info = Gtk.InfoBar()
+        overlay_info.set_halign(Gtk.Align.FILL)
+        overlay_info.set_valign(Gtk.Align.START)
+        overlay_info.set_margin_top(10)
+        overlay_info.set_margin_start(10)
+        overlay_info.set_margin_end(10)
+        lbl = Gtk.Label()
+        lbl.set_halign(Gtk.Align.FILL)
+        lbl.set_valign(Gtk.Align.FILL)
+        lbl.set_hexpand(True)
+        lbl.set_vexpand(True)
+        lbl.set_markup('<span foreground="#ff0000" size="xx-large">This is an Gtk.Infobar as an overlay</span>')
+        overlay_info.add_child(lbl)
+        self.overlay_info = overlay_info
+        frame_child = Gtk.Frame()
+        # TexkView
+        sw = Gtk.ScrolledWindow()
+        text = Gtk.TextView.new()
+        text.set_vexpand(True)
+        # Set Wrap Mode to word
+        text.set_wrap_mode(Gtk.WrapMode.WORD)
+        # Add some text
+        txt = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras vitae leo ac magna lobortis maximus. ' \
+              'Etiam eleifend, libero a pulvinar ornare, justo nunc porta velit, ut sodales mi est feugiat tellus. '
+        text.get_buffer().set_text(txt*10)
+        sw.set_child(text)
+        frame_child.set_child(sw)
+        overlay = Gtk.Overlay()
+        overlay.set_margin_top(20)
+        overlay.set_margin_start(20)
+        overlay.set_margin_end(20)
+        overlay.set_margin_bottom(20)
+        overlay.set_child(frame_child)
+        overlay.add_overlay(overlay_info)
+        content_right.append(overlay)
+        # Switch to control overlay visibility
+        switch_row = SwitchRow("Show Overlay")
+        switch_row.set_state(True)
+        switch_row.connect('state-set', self.on_switch_overlay)
+        content_right.append(switch_row)
         main.append(frame)
         # Add the content box as a new page in the stack
         return self.stack.add_page(name, title, main)
@@ -542,6 +600,11 @@ class MyWindow(Window):
             self.revealer.set_reveal_child(state)
             time.sleep(.5)
             self.top_botton_paned.set_position(1000)
+
+    def on_switch_overlay(self, widget, state):
+        """ callback for overlay switch (Page2) """
+        if self.overlay_info:
+            self.overlay_info.set_revealed(state)
 
     def on_button_clicked(self, widget):
         """ callback for buttom clicked (Page1) """

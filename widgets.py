@@ -266,6 +266,32 @@ class SearchBar(Gtk.SearchBar):
         self.entry.connect('activate', callback)
 
 
+class SwitchRow(Gtk.Box):
+    def __init__(self, text):
+        super(SwitchRow, self).__init__(orientation=Gtk.Orientation.HORIZONTAL)
+        # Switch to control overlay visibility
+        self.label = Gtk.Label.new(text)
+        self.label.set_halign(Gtk.Align.FILL)
+        self.label.set_valign(Gtk.Align.CENTER)
+        self.label.set_hexpand(True)
+        self.label.set_xalign(0.0)
+        self.label.set_margin_start(20)
+        self.label.set_margin_bottom(20)
+        self.append(self.label)
+        self.switch = Gtk.Switch()
+        self.switch.set_halign(Gtk.Align.END)
+        self.switch.set_margin_end(20)
+        self.switch.set_margin_bottom(20)
+        self.append(self.switch)
+
+    def connect(self, signal, callback):
+        self.switch.connect(signal, callback)
+
+    def set_state(self, state):
+        self.switch.set_state(state)
+
+
+
 class MenuButton(Gtk.MenuButton):
     """
     Wrapper class for at Gtk.Menubutton with a menu defined
