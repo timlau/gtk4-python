@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <object class="GtkShortcutsWindow" id="shortcuts">
+    <property name="modal">1</property>
+    <child>
+      <object class="GtkShortcutsSection">
+        <property name="section-name">shortcuts</property>
+        <property name="max-height">10</property>
+        <child>
+          <object class="GtkShortcutsGroup">
+            <property name="title" translatable="yes">General</property>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="accelerator">&lt;ctrl&gt;Page_Down</property>
+                <property name="title" translatable="yes">Do Something</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="accelerator">&lt;ctrl&gt;Page_Up</property>
+                <property name="title" translatable="yes">Do Something Else</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="accelerator">&lt;alt&gt;Q</property>
+                <property name="title" translatable="yes">Do Something</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="accelerator">&lt;alt&gt;Right</property>
+                <property name="direction">ltr</property>
+                <property name="title" translatable="yes">Do Something Else</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="accelerator">&lt;ctrl&gt;Left</property>
+                <property name="direction">ltr</property>
+                <property name="title" translatable="yes">Do Something</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="accelerator">&lt;alt&gt;Left</property>
+                <property name="direction">rtl</property>
+                <property name="title" translatable="yes">Do Something Else</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="accelerator">&lt;ctrl&gt;Right</property>
+                <property name="direction">rtl</property>
+                <property name="title" translatable="yes">Do Something</property>
+              </object>
+            </child>
+          </object>
+        </child>
+-       <child>
+          <object class="GtkShortcutsGroup">
+            <property name="view">Misc</property>
+            <property name="title" translatable="yes">Misc</property>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="accelerator">Return space</property>
+                <property name="title" translatable="yes">Do Something</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="accelerator">L</property>
+                <property name="title" translatable="yes">Do Something Else</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="accelerator">Delete</property>
+                <property name="title" translatable="yes">Do Something</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

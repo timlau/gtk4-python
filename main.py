@@ -57,6 +57,10 @@ APP_MENU = """
       <attribute name='action'>win.about</attribute>
     </item>
     <item>
+      <attribute name='label' translatable='yes'>_Shortcuts</attribute>
+      <attribute name='action'>win.shortcuts</attribute>
+    </item>
+    <item>
       <attribute name='label' translatable='yes'>_Quit</attribute>
       <attribute name='action'>win.quit</attribute>
     </item>
@@ -209,6 +213,7 @@ class MyWindow(Window):
         self.create_action('new', self.menu_handler)
         self.create_action('about', self.menu_handler)
         self.create_action('quit', self.menu_handler)
+        self.create_action('shortcuts', self.menu_handler)
 
         # make a new title label and add it to the left.
         # So we kan place the stack switcher in the middle
@@ -571,6 +576,10 @@ class MyWindow(Window):
         markup = get_font_markup('Noto Sans Regular 14', txt)
         return markup
 
+    def show_shortcuts(self):
+        builder = Gtk.Builder.new_from_file('shortcuts.ui')
+        shortcuts = builder.get_object('shortcuts')
+        shortcuts.present()
     # ---------------------- Handlers --------------------------
 
     def menu_handler(self, action, state):
@@ -579,6 +588,8 @@ class MyWindow(Window):
         print(f'active : {name}')
         if name == 'quit':
             self.close()
+        elif name == 'shortcuts':
+            self.show_shortcuts()
 
     def on_search(self, widget):
         """ callback for the searchbar entry """
