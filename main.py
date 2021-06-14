@@ -29,7 +29,7 @@ gi.require_version('Polkit', '1.0')
 
 from gi.repository import Gtk, Polkit, GObject, Gio
 from widgets import Window, Stack, MenuButton, get_font_markup, SearchBar, \
-    IconSelector, TextSelector, ListViewStrings, ListViewListStore, SwitchRow
+    IconSelector, TextSelector, ListViewStrings, ListViewListStore, SwitchRow, ButtonRow, MaterialColorDialog
 
 
 def get_permision(action_id='org.freedesktop.accounts.user-administration'):
@@ -334,11 +334,11 @@ class MyWindow(Window):
         dropdown = Gtk.DropDown.new(model)
         dropdown.set_margin_top(20)
         dropdown.set_margin_start(20)
-        dropdown.set_size_request(200,-1)
+        dropdown.set_size_request(200, -1)
         dropdown.set_halign(Gtk.Align.START)
         content_right.append(dropdown)
         # DropDown
-        dropdown = Gtk.DropDown.new_from_strings(['Red', 'Green','Blue','Black', 'White'])
+        dropdown = Gtk.DropDown.new_from_strings(['Red', 'Green', 'Blue', 'Black', 'White'])
         dropdown.set_margin_top(20)
         dropdown.set_margin_start(20)
         dropdown.set_size_request(200, -1)
@@ -388,7 +388,7 @@ class MyWindow(Window):
         # Add some text
         txt = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras vitae leo ac magna lobortis maximus. ' \
               'Etiam eleifend, libero a pulvinar ornare, justo nunc porta velit, ut sodales mi est feugiat tellus. '
-        text.get_buffer().set_text(txt*10)
+        text.get_buffer().set_text(txt * 10)
         sw.set_child(text)
         frame_child.set_child(sw)
         overlay = Gtk.Overlay()
@@ -567,7 +567,9 @@ class MyWindow(Window):
         # Content box for the page
         frame, content, label = self.setup_page_header(name, title)
         self.page5_label = label
-        # TODO: Add some real content to page 5
+        # Material Color button
+        btn_row = ButtonRow(["Material Color"], self.on_button_chooser)
+        content.append(btn_row)
         # Add the content box as a new page in the stack
         return self.stack.add_page(name, title, frame)
 
@@ -580,6 +582,7 @@ class MyWindow(Window):
         builder = Gtk.Builder.new_from_file('shortcuts.ui')
         shortcuts = builder.get_object('shortcuts')
         shortcuts.present()
+
     # ---------------------- Handlers --------------------------
 
     def menu_handler(self, action, state):
@@ -590,6 +593,18 @@ class MyWindow(Window):
             self.close()
         elif name == 'shortcuts':
             self.show_shortcuts()
+
+    def on_color_selected(self, widget):
+        selected_color = self.chooser.get_rgba()
+        color_txt = selected_color.to_string()
+        markup = self._get_text_markup(f'{widget.get_label()} was pressed. {color_txt}')
+        self.page5_label.set_markup(markup)
+
+    def on_button_chooser(self, widget):
+        """ callback for buttom clicked (Page1) """
+        dialog = MaterialColorDialog("Select Color", self)
+        dialog.connect('response', self.on_dialog_response)
+        dialog.show()
 
     def on_search(self, widget):
         """ callback for the searchbar entry """
@@ -634,6 +649,19 @@ class MyWindow(Window):
         txt = f'{widget.get_buffer().get_text()} was typed in entry'
         markup = self._get_text_markup(txt)
         self.page1_label.set_markup(markup)
+
+    def on_dialog_response(self, widget, response_id):
+        if response_id == Gtk.ResponseType.OK:
+            # get selected color in hex format
+            color = widget.get_color()
+            markup = f'<span size="xx-large" foreground="{color}">the color {color} was selected</span>'
+            self.page5_label.set_markup(markup)
+        elif response_id == Gtk.ResponseType.CANCEL:
+            print("cancel")
+            # if the messagedialog is destroyed (by pressing ESC)
+        elif response_id == Gtk.ResponseType.DELETE_EVENT:
+            print("dialog closed or cancelled")
+        widget.destroy()
 
 
 class Application(Gtk.Application):
