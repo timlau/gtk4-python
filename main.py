@@ -21,6 +21,7 @@ Sample Python Gtk4 Application
 """
 import sys
 import time
+from typing import List
 
 import gi
 
@@ -69,8 +70,9 @@ APP_MENU = """
 </interface>
 """
 
+
 class ColumnElem(GObject.GObject):
-    """ custom data element for a ListView model (Must be based on GObject) """
+    """ custom data element for a ColumnView model (Must be based on GObject) """
 
     def __init__(self, name: str):
         super(ColumnElem, self).__init__()
@@ -131,7 +133,8 @@ class MyListViewStrings(ListViewStrings):
 
     def selection_changed(self, widget, ndx: int):
         """ trigged when selecting in listview is changed"""
-        markup = self.win._get_text_markup(f'Row {ndx} was selected ( {self.store[ndx].get_string()} )')
+        markup = self.win._get_text_markup(
+            f'Row {ndx} was selected ( {self.store[ndx].get_string()} )')
         self.win.page4_label.set_markup(markup)
 
 
@@ -198,86 +201,52 @@ class MyListView(ListViewListStore):
 
     def selection_changed(self, widget, ndx: int):
         """ trigged when selecting in listview is changed"""
-        markup = self.win._get_text_markup(f'Row {ndx} was selected ( {self.store[ndx]} )')
+        markup = self.win._get_text_markup(
+            f'Row {ndx} was selected ( {self.store[ndx]} )')
         self.win.page4_label.set_markup(markup)
 
     def switch_changed(self, widget, state: bool, pos: int):
         # update the data model, with current state
         elem = self.store[pos]
         elem.state = state
-        markup = self.win._get_text_markup(f'switch in row {pos}, changed to {state}')
+        markup = self.win._get_text_markup(
+            f'switch in row {pos}, changed to {state}')
         self.win.page4_label.set_markup(markup)
 
 
 class MyColumnViewColumn (ColumnViewListStore):
     """ Custom ColumnViewColumn """
 
-    def __init__(self, win: Gtk.ApplicationWindow, col_view, data):
+    def __init__(self, win: Gtk.ApplicationWindow, col_view: Gtk.ColumnView, data: List):
         # Init ListView with store model class.
         super(MyColumnViewColumn, self).__init__(ColumnElem, col_view)
         self.win = win
-        # self.set_valign(Gtk.Align.FILL)
-        # self.set_vexpand(True)
         # put some data into the model
         for elem in data:
             self.add(ColumnElem(elem))
 
-    def factory_setup(self, widget: Gtk.ListView, item: Gtk.ListItem):
-        """ Gtk.SignalListItemFactory::setup signal callback (overloaded from parent class)
-
-        Handles the creation widgets to put in the ListView
+    def factory_setup(self, widget, item: Gtk.ListItem):
+        """ Gtk.SignalListItemFactory::setup signal callback 
+        Handles the creation widgets to put in the ColumnViewColumn
         """
-        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         label = Gtk.Label()
         label.set_halign(Gtk.Align.START)
         label.set_hexpand(True)
         label.set_margin_start(10)
-        # switch = Gtk.Switch()
-        # switch.set_halign(Gtk.Align.END)
-        # switch.set_margin_end(10)
-        box.append(label)
-        # box.append(switch)
-        item.set_child(box)
+        item.set_child(label)
 
-    def factory_bind(self, widget,  item: Gtk.ListItem):
-        """ Gtk.SignalListItemFactory::bind signal callback (overloaded from parent class)
-
+    def factory_bind(self, widget, item: Gtk.ListItem):
+        """ Gtk.SignalListItemFactory::bind signal callback 
         Handles adding data for the model to the widgets created in setup
         """
-        # get the Gtk.Box stored in the ListItem
-        box = item.get_child()
-        # get the model item, connected to current ListItem
-        data = item.get_item()
-        # get the Gtk.Label (first item in box)
-        label = box.get_first_child()
-        # get the Gtk.Switch (next sibling to the Label)
-        switch = label.get_next_sibling()
-        # Update Gtk.Label with data from model item
-        label.set_text(data.name)
-        # Update Gtk.Switch with data from model item
-        # switch.set_state(data.state)
-        # connect switch to handler, so we can handle changes
-        # switch.connect('state-set', self.switch_changed, item.get_position())
-        item.set_child(box)
-
-    def factory_unbind(self, widget, item: Gtk.ListItem):
-        """ Gtk.SignalListItemFactory::unbind signal callback (overloaded from parent class) """
-        pass
-
-    def factory_teardown(self, widget, item: Gtk.ListItem):
-        """ Gtk.SignalListItemFactory::teardown signal callback (overloaded from parent class """
-        pass
+        label = item.get_child()  # Get the Gtk.Label stored in the ListItem
+        data = item.get_item()    # get the model item, connected to current ListItem
+        label.set_text(data.name)  # Update Gtk.Label with data from model item
 
     def selection_changed(self, widget, ndx: int):
         """ trigged when selecting in listview is changed"""
-        markup = self.win._get_text_markup(f'Row {ndx} was selected ( {self.store[ndx]} )')
-        self.win.page4_label.set_markup(markup)
-
-    def switch_changed(self, widget, state: bool, pos: int):
-        # update the data model, with current state
-        elem = self.store[pos]
-        elem.state = state
-        markup = self.win._get_text_markup(f'switch in row {pos}, changed to {state}')
+        markup = self.win._get_text_markup(
+            f'Row {ndx} was selected ( {self.store[ndx]} )')
         self.win.page4_label.set_markup(markup)
 
 
@@ -420,7 +389,8 @@ class MyWindow(Window):
         dropdown.set_halign(Gtk.Align.START)
         content_right.append(dropdown)
         # DropDown
-        dropdown = Gtk.DropDown.new_from_strings(['Red', 'Green', 'Blue', 'Black', 'White'])
+        dropdown = Gtk.DropDown.new_from_strings(
+            ['Red', 'Green', 'Blue', 'Black', 'White'])
         dropdown.set_margin_top(20)
         dropdown.set_margin_start(20)
         dropdown.set_size_request(200, -1)
@@ -457,7 +427,8 @@ class MyWindow(Window):
         lbl.set_valign(Gtk.Align.FILL)
         lbl.set_hexpand(True)
         lbl.set_vexpand(True)
-        lbl.set_markup('<span foreground="#ff0000" size="xx-large">This is an Gtk.Infobar as an overlay</span>')
+        lbl.set_markup(
+            '<span foreground="#ff0000" size="xx-large">This is an Gtk.Infobar as an overlay</span>')
         overlay_info.add_child(lbl)
         self.overlay_info = overlay_info
         frame_child = Gtk.Frame()
@@ -504,7 +475,8 @@ class MyWindow(Window):
         # Left/Right Paned
         # Orientation is the ways the separator is moving, not the way it is facing
         # So HORIZONTAL split in Left/Right and VERTICAL split in Top/Down
-        self.left_right_paned = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
+        self.left_right_paned = Gtk.Paned(
+            orientation=Gtk.Orientation.HORIZONTAL)
         # Left Side
         left_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         left_box.set_vexpand(True)
@@ -579,14 +551,16 @@ class MyWindow(Window):
         self.bottom_box.set_vexpand(False)
         # Add a label with custom font in the center
         label = Gtk.Label()
-        markup = get_font_markup('Noto Sans Regular 24', f'This page is styled using main.css')
+        markup = get_font_markup(
+            'Noto Sans Regular 24', f'This page is styled using main.css')
         label.set_markup(markup)
         # fill the whole page, will make the Label centered.
         label.set_halign(Gtk.Align.CENTER)
         label.set_vexpand(False)
         self.bottom_box.append(label)
         label = Gtk.Label()
-        markup = get_font_markup('Noto Sans Regular 18', f'UGLY AS HELL, but shows how it is working')
+        markup = get_font_markup(
+            'Noto Sans Regular 18', f'UGLY AS HELL, but shows how it is working')
         label.set_markup(markup)
         # fill the whole page, will make the Label centered.
         label.set_halign(Gtk.Align.CENTER)
@@ -621,14 +595,14 @@ class MyWindow(Window):
         # ColumnView with custom columns
         self.columnview = Gtk.ColumnView()
         self.columnview.set_show_column_separators(True)
-        data = [f'Data Row: {row}' for row in range(50) ]
+        data = [f'Data Row: {row}' for row in range(50)]
         for i in range(4):
             column = MyColumnViewColumn(self, self.columnview, data)
             column.set_title(f"Column {i}")
             self.columnview.append_column(column)
         lw_frame = Gtk.Frame()
         lw_frame.set_valign(Gtk.Align.FILL)
-        lw_frame.set_vexpand(True)        
+        lw_frame.set_vexpand(True)
         lw_frame.set_margin_start(20)
         lw_frame.set_margin_end(20)
         lw_frame.set_margin_top(10)
@@ -642,7 +616,7 @@ class MyWindow(Window):
         self.listview = MyListView(self)
         lw_frame = Gtk.Frame()
         lw_frame.set_valign(Gtk.Align.FILL)
-        lw_frame.set_vexpand(True)        
+        lw_frame.set_vexpand(True)
         lw_frame.set_margin_start(20)
         lw_frame.set_margin_end(20)
         # lw_frame.set_margin_top(10)
@@ -655,7 +629,7 @@ class MyWindow(Window):
         self.listview_str = MyListViewStrings(self)
         lw_frame = Gtk.Frame()
         lw_frame.set_valign(Gtk.Align.FILL)
-        lw_frame.set_vexpand(True)        
+        lw_frame.set_vexpand(True)
         lw_frame.set_margin_start(20)
         lw_frame.set_margin_end(20)
         # lw_frame.set_margin_top(10)
@@ -705,7 +679,8 @@ class MyWindow(Window):
     def on_color_selected(self, widget):
         selected_color = self.chooser.get_rgba()
         color_txt = selected_color.to_string()
-        markup = self._get_text_markup(f'{widget.get_label()} was pressed. {color_txt}')
+        markup = self._get_text_markup(
+            f'{widget.get_label()} was pressed. {color_txt}')
         self.page5_label.set_markup(markup)
 
     def on_button_chooser(self, widget):

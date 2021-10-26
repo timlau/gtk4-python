@@ -90,7 +90,8 @@ class ListViewBase(Gtk.ListView):
         self.factory.connect('bind', self.on_factory_bind)
         self.factory.connect('unbind', self.on_factory_unbind)
         self.factory.connect('teardown', self.on_factory_teardown)
-        self.set_factory(self.factory)  # Create data model, use our own class as elements
+        # Create data model, use our own class as elements
+        self.set_factory(self.factory)
         self.store = self.setup_store(model_cls)
         # create a selection model containing our data model
         self.model = self.setup_model(self.store)
@@ -289,12 +290,13 @@ class ViewColumnBase(Gtk.ColumnViewColumn):
         self.factory.connect('bind', self.on_factory_bind)
         self.factory.connect('unbind', self.on_factory_unbind)
         self.factory.connect('teardown', self.on_factory_teardown)
-        self.set_factory(self.factory)  # Create data model, use our own class as elements
+        # Create data model, use our own class as elements
+        self.set_factory(self.factory)
         self.store = self.setup_store(model_cls)
         # create a selection model containing our data model
         self.model = self.setup_model(self.store)
         self.model.connect('selection-changed', self.on_selection_changed)
-        # set the selection model to the view
+        # add model to the ColumnView
         self.col_view.set_model(self.model)
 
     def setup_model(self, store: Gio.ListModel) -> Gtk.SelectionModel:
@@ -381,6 +383,7 @@ class ViewColumnBase(Gtk.ColumnViewColumn):
         """
         pass
 
+
 class ColumnViewListStore(ViewColumnBase):
     """ ColumnViewColumn base with an Gio.ListStore as data model
     It can contain misc objects derived from GObject
@@ -392,6 +395,7 @@ class ColumnViewListStore(ViewColumnBase):
     def setup_store(self, model_cls) -> Gio.ListModel:
         """ Setup the data model """
         return Gio.ListStore.new(model_cls)
+
 
 class SearchBar(Gtk.SearchBar):
     """ Wrapper for Gtk.Searchbar Gtk.SearchEntry"""
@@ -527,7 +531,8 @@ class Window(Gtk.ApplicationWindow):
     def _add_widget_styling(self, widget):
         if self.css_provider:
             context = widget.get_style_context()
-            context.add_provider(self.css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER)
+            context.add_provider(
+                self.css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER)
 
     def add_custom_styling(self, widget):
         self._add_widget_styling(widget)
