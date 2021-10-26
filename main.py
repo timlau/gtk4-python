@@ -29,7 +29,7 @@ gi.require_version('Polkit', '1.0')
 
 from gi.repository import Gtk, Polkit, GObject, Gio
 from widgets import Window, Stack, MenuButton, get_font_markup, SearchBar, \
-    IconSelector, TextSelector, ListViewStrings, ListViewListStore, SwitchRow, ButtonRow, MaterialColorDialog
+    IconSelector, TextSelector, ListViewStrings, ListViewListStore, SwitchRow, ButtonRow, MaterialColorDialog, ColumnViewListStore
 
 
 def get_permision(action_id='org.freedesktop.accounts.user-administration'):
@@ -68,6 +68,16 @@ APP_MENU = """
 </menu>
 </interface>
 """
+
+class ColumnElem(GObject.GObject):
+    """ custom data element for a ListView model (Must be based on GObject) """
+
+    def __init__(self, name: str):
+        super(ColumnElem, self).__init__()
+        self.name = name
+
+    def __repr__(self):
+        return f'ColumnElem(name: {self.name})'
 
 
 class ListElem(GObject.GObject):
@@ -183,6 +193,78 @@ class MyListView(ListViewListStore):
         pass
 
     def factory_teardown(self, widget: Gtk.ListView, item: Gtk.ListItem):
+        """ Gtk.SignalListItemFactory::teardown signal callback (overloaded from parent class """
+        pass
+
+    def selection_changed(self, widget, ndx: int):
+        """ trigged when selecting in listview is changed"""
+        markup = self.win._get_text_markup(f'Row {ndx} was selected ( {self.store[ndx]} )')
+        self.win.page4_label.set_markup(markup)
+
+    def switch_changed(self, widget, state: bool, pos: int):
+        # update the data model, with current state
+        elem = self.store[pos]
+        elem.state = state
+        markup = self.win._get_text_markup(f'switch in row {pos}, changed to {state}')
+        self.win.page4_label.set_markup(markup)
+
+
+class MyColumnViewColumn (ColumnViewListStore):
+    """ Custom ColumnViewColumn """
+
+    def __init__(self, win: Gtk.ApplicationWindow, col_view, data):
+        # Init ListView with store model class.
+        super(MyColumnViewColumn, self).__init__(ColumnElem, col_view)
+        self.win = win
+        # self.set_valign(Gtk.Align.FILL)
+        # self.set_vexpand(True)
+        # put some data into the model
+        for elem in data:
+            self.add(ColumnElem(elem))
+
+    def factory_setup(self, widget: Gtk.ListView, item: Gtk.ListItem):
+        """ Gtk.SignalListItemFactory::setup signal callback (overloaded from parent class)
+
+        Handles the creation widgets to put in the ListView
+        """
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        label = Gtk.Label()
+        label.set_halign(Gtk.Align.START)
+        label.set_hexpand(True)
+        label.set_margin_start(10)
+        # switch = Gtk.Switch()
+        # switch.set_halign(Gtk.Align.END)
+        # switch.set_margin_end(10)
+        box.append(label)
+        # box.append(switch)
+        item.set_child(box)
+
+    def factory_bind(self, widget,  item: Gtk.ListItem):
+        """ Gtk.SignalListItemFactory::bind signal callback (overloaded from parent class)
+
+        Handles adding data for the model to the widgets created in setup
+        """
+        # get the Gtk.Box stored in the ListItem
+        box = item.get_child()
+        # get the model item, connected to current ListItem
+        data = item.get_item()
+        # get the Gtk.Label (first item in box)
+        label = box.get_first_child()
+        # get the Gtk.Switch (next sibling to the Label)
+        switch = label.get_next_sibling()
+        # Update Gtk.Label with data from model item
+        label.set_text(data.name)
+        # Update Gtk.Switch with data from model item
+        # switch.set_state(data.state)
+        # connect switch to handler, so we can handle changes
+        # switch.connect('state-set', self.switch_changed, item.get_position())
+        item.set_child(box)
+
+    def factory_unbind(self, widget, item: Gtk.ListItem):
+        """ Gtk.SignalListItemFactory::unbind signal callback (overloaded from parent class) """
+        pass
+
+    def factory_teardown(self, widget, item: Gtk.ListItem):
         """ Gtk.SignalListItemFactory::teardown signal callback (overloaded from parent class """
         pass
 
@@ -535,23 +617,49 @@ class MyWindow(Window):
         # Content box for the page
         frame, content, label = self.setup_page_header(name, title)
         self.page4_label = label
+
+        # ColumnView with custom columns
+        self.columnview = Gtk.ColumnView()
+        self.columnview.set_show_column_separators(True)
+        data = [f'Data Row: {row}' for row in range(50) ]
+        for i in range(4):
+            column = MyColumnViewColumn(self, self.columnview, data)
+            column.set_title(f"Column {i}")
+            self.columnview.append_column(column)
+        lw_frame = Gtk.Frame()
+        lw_frame.set_valign(Gtk.Align.FILL)
+        lw_frame.set_vexpand(True)        
+        lw_frame.set_margin_start(20)
+        lw_frame.set_margin_end(20)
+        lw_frame.set_margin_top(10)
+        lw_frame.set_margin_bottom(10)
+        sw = Gtk.ScrolledWindow()
+        sw.set_child(self.columnview)
+        lw_frame.set_child(sw)
+        content.append(lw_frame)
+
+        # Listview with switches
         self.listview = MyListView(self)
         lw_frame = Gtk.Frame()
         lw_frame.set_valign(Gtk.Align.FILL)
+        lw_frame.set_vexpand(True)        
         lw_frame.set_margin_start(20)
         lw_frame.set_margin_end(20)
-        lw_frame.set_margin_top(20)
-        lw_frame.set_margin_bottom(20)
-        # Create Gtk.Listview
-        lw = self.listview
-        lw_frame.set_child(lw)
+        # lw_frame.set_margin_top(10)
+        lw_frame.set_margin_bottom(10)
+        sw = Gtk.ScrolledWindow()
+        sw.set_child(self.listview)
+        lw_frame.set_child(sw)
         content.append(lw_frame)
+        # Simple Listview with strings
         self.listview_str = MyListViewStrings(self)
         lw_frame = Gtk.Frame()
+        lw_frame.set_valign(Gtk.Align.FILL)
+        lw_frame.set_vexpand(True)        
         lw_frame.set_margin_start(20)
         lw_frame.set_margin_end(20)
-        lw_frame.set_margin_top(20)
-        lw_frame.set_margin_bottom(20)
+        # lw_frame.set_margin_top(10)
+        lw_frame.set_margin_bottom(10)
         sw = Gtk.ScrolledWindow()
         # Create Gtk.Listview
         lw = self.listview_str
