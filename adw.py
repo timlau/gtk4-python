@@ -26,27 +26,29 @@ from typing import List
 import gi
 
 gi.require_version("Gtk", "4.0")
-gi.require_version('Adw', '1')
+gi.require_version("Adw", "1")
 
-from gi.repository import Gtk,  GObject, Gio, Adw
+from gi.repository import Gtk, GObject, Gio, Adw
 from widgets import ColumnViewListStore
 
 
 class ColumnElem(GObject.GObject):
-    """ custom data element for a ColumnView model (Must be based on GObject) """
+    """custom data element for a ColumnView model (Must be based on GObject)"""
 
     def __init__(self, name: str):
         super(ColumnElem, self).__init__()
         self.name = name
 
     def __repr__(self):
-        return f'ColumnElem(name: {self.name})'
+        return f"ColumnElem(name: {self.name})"
 
 
-class MyColumnViewColumn (ColumnViewListStore):
-    """ Custom ColumnViewColumn """
+class MyColumnViewColumn(ColumnViewListStore):
+    """Custom ColumnViewColumn"""
 
-    def __init__(self, win: Gtk.ApplicationWindow, col_view: Gtk.ColumnView, data: List):
+    def __init__(
+        self, win: Gtk.ApplicationWindow, col_view: Gtk.ColumnView, data: List
+    ):
         # Init ListView with store model class.
         super(MyColumnViewColumn, self).__init__(ColumnElem, col_view)
         self.win = win
@@ -55,7 +57,7 @@ class MyColumnViewColumn (ColumnViewListStore):
             self.add(ColumnElem(elem))
 
     def factory_setup(self, widget, item: Gtk.ListItem):
-        """ Gtk.SignalListItemFactory::setup signal callback 
+        """Gtk.SignalListItemFactory::setup signal callback
         Handles the creation widgets to put in the ColumnViewColumn
         """
         label = Gtk.Label()
@@ -65,46 +67,39 @@ class MyColumnViewColumn (ColumnViewListStore):
         item.set_child(label)
 
     def factory_bind(self, widget, item: Gtk.ListItem):
-        """ Gtk.SignalListItemFactory::bind signal callback 
+        """Gtk.SignalListItemFactory::bind signal callback
         Handles adding data for the model to the widgets created in setup
         """
         label = item.get_child()  # Get the Gtk.Label stored in the ListItem
-        data = item.get_item()    # get the model item, connected to current ListItem
+        data = item.get_item()  # get the model item, connected to current ListItem
         label.set_text(data.name)  # Update Gtk.Label with data from model item
 
-    def selection_changed(self, widget, ndx: int):
-        """ trigged when selecting in listview is changed"""
-        markup = self.win._get_text_markup(
-            f'Row {ndx} was selected ( {self.store[ndx]} )')
-        self.win.page4_label.set_markup(markup)
 
 class MyWindow(Adw.ApplicationWindow):
-
     def __init__(self, title, width, height, **kwargs):
         super(MyWindow, self).__init__(**kwargs)
         self.set_default_size(width, height)
         box = Gtk.Box()
-        box.props.orientation =  Gtk.Orientation.VERTICAL
+        box.props.orientation = Gtk.Orientation.VERTICAL
         header = Gtk.HeaderBar()
         stack = Adw.ViewStack()
-        switcher = Adw.ViewSwitcherTitle() 
+        switcher = Adw.ViewSwitcherTitle()
         switcher.set_stack(stack)
         header.set_title_widget(switcher)
         box.append(header)
         content = self.setup_content()
-        page1 = stack.add_titled(content,"page1","Page 1")
+        page1 = stack.add_titled(content, "page1", "Page 1")
         box_p2 = Gtk.Box()
-        page2 = stack.add_titled(box_p2,"page2","Page 2")
+        page2 = stack.add_titled(box_p2, "page2", "Page 2")
         box.append(stack)
         self.set_content(box)
 
-
     def setup_content(self):
-        """ Add a page with a text selector to the stack"""
+        """Add a page with a text selector to the stack"""
         # ColumnView with custom columns
         self.columnview = Gtk.ColumnView()
         self.columnview.set_show_column_separators(True)
-        data = [f'Data Row: {row}' for row in range(5000)]
+        data = [f"Data Row: {row}" for row in range(5000)]
         for i in range(4):
             column = MyColumnViewColumn(self, self.columnview, data)
             column.set_title(f"Column {i}")
@@ -123,11 +118,12 @@ class MyWindow(Adw.ApplicationWindow):
 
 
 class Application(Adw.Application):
-    """ Main Aplication class """
+    """Main Aplication class"""
 
     def __init__(self):
-        super().__init__(application_id='dk.rasmil.Example',
-                         flags=Gio.ApplicationFlags.FLAGS_NONE)
+        super().__init__(
+            application_id="dk.rasmil.Example", flags=Gio.ApplicationFlags.FLAGS_NONE
+        )
 
     def do_activate(self):
         win = self.props.active_window
@@ -137,10 +133,10 @@ class Application(Adw.Application):
 
 
 def main():
-    """ Run the main application"""
+    """Run the main application"""
     app = Application()
     return app.run(sys.argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
